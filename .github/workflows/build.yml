@@ -48,6 +48,9 @@ jobs:
         run: |
           EXE=$(find build/LHSampleSynthTests_artefacts -type f \( -name LHSampleSynthTests -o -name LHSampleSynthTests.exe \) | head -1)
           echo "Running $EXE"
+          if [ -z "$EXE" ]; then
+            find build -iname "*LHSampleSynthTests*" -not -path "*CMakeFiles*" | head -20 | while read -r f; do echo "::error title=candidate::$f"; done
+          fi
           set +e
           "$EXE" > test-output.txt 2>&1
           CODE=$?
