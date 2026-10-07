@@ -20,7 +20,17 @@ LHSampleSynthProcessor::LHSampleSynthProcessor()
             p (ids::loopStart), p (ids::loopEnd), p (ids::loopCrossfade), p (ids::grainSize), p (ids::grainDensity),
             p (ids::grainPosRandom), p (ids::pitchRandom), p (ids::stereoSpread), p (ids::freeze), p (ids::reverse),
             p (ids::filterMode), p (ids::cutoff), p (ids::resonance), p (ids::formant), p (ids::pan),
-            p (ids::stereoWidth), p (ids::outputGain), p (ids::velocitySens), p (ids::polyphony) };
+            p (ids::stereoWidth), p (ids::outputGain), p (ids::velocitySens), p (ids::polyphony),
+            p (ids::lfoShape), p (ids::lfoRate), p (ids::lfoSync), p (ids::lfoDivision), p (ids::lfoToPitch),
+            p (ids::lfoToCutoff), p (ids::lfoToAmp), p (ids::lfoToPan), p (ids::lfoToGrainPos),
+            p (ids::fenvAttack), p (ids::fenvDecay), p (ids::fenvSustain), p (ids::fenvRelease),
+            p (ids::fenvAmount), p (ids::velToFilter),
+            p (ids::voiceMode), p (ids::glide), p (ids::coarseTune), p (ids::fineTune), p (ids::unisonVoices),
+            p (ids::unisonDetune), p (ids::drive),
+            p (ids::chorusRate), p (ids::chorusDepth), p (ids::chorusMix),
+            p (ids::delayTime), p (ids::delaySync), p (ids::delayDivision), p (ids::delayFeedback),
+            p (ids::delayMix), p (ids::delayPingPong),
+            p (ids::reverbSize), p (ids::reverbDamping), p (ids::reverbMix) };
 
     startTimer (500); // garbage-collect replaced samples on the message thread
 }
@@ -82,6 +92,41 @@ lhss::EngineParams LHSampleSynthProcessor::readParameters() const noexcept
     e.outputGainDb = f (raw.outputGain);
     e.velocitySensitivity = f (raw.velocitySens);
     e.polyphony = i (raw.polyphony);
+
+    e.lfoShape = static_cast<lhss::LfoShape> (juce::jlimit (0, 4, i (raw.lfoShape)));
+    e.lfoRateHz = f (raw.lfoRate);
+    e.lfoSync = b (raw.lfoSync);
+    e.lfoDivision = i (raw.lfoDivision);
+    e.lfoToPitch = f (raw.lfoToPitch);
+    e.lfoToCutoff = f (raw.lfoToCutoff);
+    e.lfoToAmp = f (raw.lfoToAmp);
+    e.lfoToPan = f (raw.lfoToPan);
+    e.lfoToGrainPos = f (raw.lfoToGrainPos);
+    e.fenvAttackMs = f (raw.fenvAttack);
+    e.fenvDecayMs = f (raw.fenvDecay);
+    e.fenvSustain = f (raw.fenvSustain);
+    e.fenvReleaseMs = f (raw.fenvRelease);
+    e.fenvAmount = f (raw.fenvAmount);
+    e.velToFilter = f (raw.velToFilter);
+    e.voiceMode = static_cast<lhss::VoiceMode> (juce::jlimit (0, 2, i (raw.voiceMode)));
+    e.glideMs = f (raw.glide);
+    e.coarseTune = i (raw.coarseTune);
+    e.fineTune = f (raw.fineTune);
+    e.unisonVoices = i (raw.unisonVoices);
+    e.unisonDetune = f (raw.unisonDetune);
+    e.drive = f (raw.drive);
+    e.chorusRate = f (raw.chorusRate);
+    e.chorusDepth = f (raw.chorusDepth);
+    e.chorusMix = f (raw.chorusMix);
+    e.delayTimeMs = f (raw.delayTime);
+    e.delaySync = b (raw.delaySync);
+    e.delayDivision = i (raw.delayDivision);
+    e.delayFeedback = f (raw.delayFeedback);
+    e.delayMix = f (raw.delayMix);
+    e.delayPingPong = b (raw.delayPingPong);
+    e.reverbSize = f (raw.reverbSize);
+    e.reverbDamping = f (raw.reverbDamping);
+    e.reverbMix = f (raw.reverbMix);
     return e;
 }
 
@@ -90,6 +135,9 @@ void LHSampleSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // Realtime: parameter reads are atomic loads; the engine does no I/O, locking or allocation.
     juce::ScopedNoDenormals noDenormals;
     engine.setParameters (readParameters());
+    if (auto* hostPlayHead = getPlayHead())
+        if (const auto pos = hostPlayHead->getPosition())
+            if (const auto bpm = pos->getBpm()) engine.setTempo (*bpm);
     engine.process (buffer, midi);
     activeVoices.store (engine.getActiveVoiceCount(), std::memory_order_relaxed);
 }

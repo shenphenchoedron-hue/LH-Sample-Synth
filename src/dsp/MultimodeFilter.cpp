@@ -10,10 +10,10 @@ namespace
 constexpr int kCoefInterval = 8;
 }
 
-void MultimodeFilter::prepare (double sr) noexcept
+void MultimodeFilter::prepare (double sr, double smoothingSeconds) noexcept
 {
     sampleRate = sr;
-    log2Cutoff.reset (sr, 0.03);
+    log2Cutoff.reset (sr, smoothingSeconds);
     resonance.reset (sr, 0.03);
     log2Cutoff.setCurrentAndTarget (std::log2 (20000.0f));
     resonance.setCurrentAndTarget (0.1f);

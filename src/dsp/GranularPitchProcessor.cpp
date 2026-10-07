@@ -99,12 +99,13 @@ void GranularPitchProcessor::spawnGrain (const SourceView& src, const ResolvedRe
 
     // Per-grain detune: quadratic response, ±12 semitones at 100 %.
     const double semis = static_cast<double> (s.pitchRandom * s.pitchRandom) * 12.0 * randomBipolar();
-    const double rate = s.baseIncrement * s.pitchRatio * std::pow (2.0, semis / 12.0);
+    const double relative = s.baseIncrement * std::pow (2.0, semis / 12.0); // pitch ratio applied at render
+    const double rate = relative * s.pitchRatio;
     const double travel = s.baseIncrement * s.travelSpeed;
 
     // Align the grain centre with the playhead at the grain's centre time (signed speeds).
     const int dir = ph.direction;
-    double start = ph.position + 0.5 * length * (travel - rate) * dir;
+    double start = ph.position + 0.5 * length * (travel - rate) * dir + s.positionOffset;
 
     // Position randomness: up to one grain length plus 0.5 s at 100 %.
     double jitterRange = s.positionRandom * (length * s.baseIncrement + s.positionRandom * 0.5 * src.sampleRate);
@@ -141,7 +142,7 @@ void GranularPitchProcessor::spawnGrain (const SourceView& src, const ResolvedRe
     slot->wrapInLoop = inLoop;
     slot->direction = dir;
     slot->position = start;
-    slot->increment = rate;
+    slot->increment = relative;
     slot->length = length;
     slot->age = 0;
     slot->gainL = std::cos (angle) * 1.41421356f;
@@ -185,7 +186,7 @@ void GranularPitchProcessor::render (const SourceView& src, const ResolvedRegion
         {
             int stillActive = 0;
             for (auto& g : grains)
-                if (g.active && g.render (src, region, window.data(), kWindowSize, norm, outL + i, outR + i, segment))
+                if (g.active && g.render (src, region, window.data(), kWindowSize, norm, s.pitchRatio, outL + i, outR + i, segment))
                     ++stillActive;
             activeGrains = stillActive;
         }

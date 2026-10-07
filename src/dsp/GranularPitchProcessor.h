@@ -61,6 +61,7 @@ public:
         float positionRandom = 0.0f;    // 0..1
         float pitchRandom = 0.0f;       // 0..1
         float stereoSpread = 0.0f;      // 0..1
+        double positionOffset = 0.0;    // source frames added to every new grain's start (LFO)
     };
 
     GranularPitchProcessor();

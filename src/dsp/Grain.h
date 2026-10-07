@@ -12,7 +12,7 @@ struct Grain
     bool wrapInLoop = false;   // grain was born inside a loop and wraps with it
     int direction = 1;
     double position = 0.0;     // source frame
-    double increment = 1.0;    // source frames per output sample (|value|; sign via direction)
+    double increment = 1.0;    // source frames per output sample before the voice pitch ratio (sign via direction)
     int length = 0;            // output samples
     int age = 0;
     float gainL = 1.0f, gainR = 1.0f;
@@ -20,6 +20,6 @@ struct Grain
     /** Renders up to n output samples, adding into outL/outR scaled by `gain`. `window` is a
         Hann table of tableSize+1 points. Returns false once the grain has finished. */
     bool render (const SourceView& src, const ResolvedRegion& region, const float* window, int tableSize,
-                 float gain, float* outL, float* outR, int n) noexcept;
+                 float gain, double pitchRatio, float* outL, float* outR, int n) noexcept;
 };
 } // namespace lhss::dsp

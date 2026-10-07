@@ -26,7 +26,7 @@ public:
     void filesDropped (const juce::StringArray& files, int, int) override;
 
     static constexpr int kDesignWidth = 2400;
-    static constexpr int kDesignHeight = 540;
+    static constexpr int kDesignHeight = 910;
 
 private:
     class Canvas final : public juce::Component
@@ -64,6 +64,18 @@ private:
     lhss::gui::Knob grainSize, grainDensity, posRandom, pitchRandom, stereoSpread, formant;
     lhss::gui::Knob cutoff, resonance;
     lhss::gui::Knob pan, width, outputGain;
+
+    // Synth section (second row)
+    juce::ComboBox lfoShapeBox, lfoDivisionBox, delayDivisionBox;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> lfoShapeAttach, lfoDivisionAttach, delayDivisionAttach;
+    juce::ToggleButton lfoSyncSwitch, delaySyncSwitch, pingPongSwitch;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> lfoSyncAttach, delaySyncAttach, pingPongAttach;
+    lhss::gui::ChoiceSegment voiceMode;
+    lhss::gui::Knob lfoRate, lfoToPitch, lfoToCutoff, lfoToAmp, lfoToPan, lfoToGrainPos;
+    lhss::gui::Knob fenvAttack, fenvDecay, fenvSustain, fenvRelease, fenvAmount, velToFilter;
+    lhss::gui::Knob glide, coarseTune, fineTune, unisonVoices, unisonDetune, drive;
+    lhss::gui::Knob chorusRate, chorusDepth, chorusMix, delayTime, delayFeedback, delayMix;
+    lhss::gui::Knob reverbSize, reverbDamping, reverbMix;
 
     std::unique_ptr<juce::FileChooser> chooser;
     double shownDuration = -1.0;

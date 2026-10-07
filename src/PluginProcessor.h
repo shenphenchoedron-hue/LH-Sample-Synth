@@ -41,7 +41,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return 4.0; } // delay / reverb tails
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -90,6 +90,19 @@ private:
         std::atomic<float>* cutoff; std::atomic<float>* resonance; std::atomic<float>* formant;
         std::atomic<float>* pan; std::atomic<float>* stereoWidth; std::atomic<float>* outputGain;
         std::atomic<float>* velocitySens; std::atomic<float>* polyphony;
+        // Synth section
+        std::atomic<float>* lfoShape; std::atomic<float>* lfoRate; std::atomic<float>* lfoSync;
+        std::atomic<float>* lfoDivision; std::atomic<float>* lfoToPitch; std::atomic<float>* lfoToCutoff;
+        std::atomic<float>* lfoToAmp; std::atomic<float>* lfoToPan; std::atomic<float>* lfoToGrainPos;
+        std::atomic<float>* fenvAttack; std::atomic<float>* fenvDecay; std::atomic<float>* fenvSustain;
+        std::atomic<float>* fenvRelease; std::atomic<float>* fenvAmount; std::atomic<float>* velToFilter;
+        std::atomic<float>* voiceMode; std::atomic<float>* glide; std::atomic<float>* coarseTune;
+        std::atomic<float>* fineTune; std::atomic<float>* unisonVoices; std::atomic<float>* unisonDetune;
+        std::atomic<float>* drive;
+        std::atomic<float>* chorusRate; std::atomic<float>* chorusDepth; std::atomic<float>* chorusMix;
+        std::atomic<float>* delayTime; std::atomic<float>* delaySync; std::atomic<float>* delayDivision;
+        std::atomic<float>* delayFeedback; std::atomic<float>* delayMix; std::atomic<float>* delayPingPong;
+        std::atomic<float>* reverbSize; std::atomic<float>* reverbDamping; std::atomic<float>* reverbMix;
     } raw {};
 
     mutable std::mutex statusMutex;

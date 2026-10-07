@@ -10,12 +10,12 @@ constexpr double kEdgeFade = 64.0; // frames: soft mask outside the active regio
 }
 
 bool Grain::render (const SourceView& src, const ResolvedRegion& region, const float* window, int tableSize,
-                    float gain, float* outL, float* outR, int n) noexcept
+                    float gain, double pitchRatio, float* outL, float* outR, int n) noexcept
 {
     if (! active) return false;
 
     const double phaseInc = static_cast<double> (tableSize) / static_cast<double> (length);
-    const double step = increment * direction;
+    const double step = increment * pitchRatio * direction; // ratio follows glide / vibrato live
     const bool canWrap = wrapInLoop && region.loopOn && region.loopLength() >= 1.0;
     const float gl = gainL * gain, gr = gainR * gain;
     const int count = std::min (n, length - age);

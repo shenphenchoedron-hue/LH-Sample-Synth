@@ -13,7 +13,7 @@ class MultimodeFilter
 public:
     enum class Mode { LowPass = 0, HighPass = 1, BandPass = 2 };
 
-    void prepare (double sampleRate) noexcept;
+    void prepare (double sampleRate, double smoothingSeconds = 0.03) noexcept;
     void reset() noexcept;
     void setMode (Mode m) noexcept { mode = m; }
     void setCutoff (float hz) noexcept;

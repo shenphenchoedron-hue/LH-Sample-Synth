@@ -10,18 +10,25 @@ namespace
 {
 struct Panel
 {
-    int x, w;
+    int x, y, w;
     juce::Colour colour;
     const char* title;
 };
 
+constexpr int kRow1 = 112, kRow2 = 478, kPanelHeight = 352;
+
 const Panel panels[] = {
-    { 38,   520, col::green,    "Sample" },
-    { 570,  292, col::orange,   "Loop" },
-    { 874,  420, col::pink,     "Envelope (ADSR)" },
-    { 1306, 604, col::purple,   "Granular" },
-    { 1922, 230, col::cyan,     "Filter" },
-    { 2164, 198, col::outGreen, "Output" },
+    { 38,   kRow1, 520, col::green,    "Sample" },
+    { 570,  kRow1, 292, col::orange,   "Loop" },
+    { 874,  kRow1, 420, col::pink,     "Envelope (ADSR)" },
+    { 1306, kRow1, 604, col::purple,   "Granular" },
+    { 1922, kRow1, 230, col::cyan,     "Filter" },
+    { 2164, kRow1, 198, col::outGreen, "Output" },
+    { 38,   kRow2, 560, col::blue,     "LFO" },
+    { 610,  kRow2, 420, col::cyan,     "Filter Envelope" },
+    { 1042, kRow2, 420, col::orange,   "Voice" },
+    { 1474, kRow2, 150, col::coral,    "Drive" },
+    { 1636, kRow2, 726, col::purple,   "Effects" },
 };
 
 void drawLabel (juce::Graphics& g, const juce::String& text, int x, int baselineY, int width = 140,
@@ -45,7 +52,7 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     const auto full = juce::Rectangle<float> (0, 0, (float) kDesignWidth, (float) kDesignHeight);
     g.fillAll (juce::Colours::white);
 
-    const auto frame = juce::Rectangle<float> (18, 20, 2364, 500);
+    const auto frame = juce::Rectangle<float> (18, 20, 2364, 870);
     juce::Path framePath;
     framePath.addRoundedRectangle (frame, 24.0f);
     juce::DropShadow (juce::Colour (0xff58708a).withAlpha (0.18f), 28, { 0, 8 }).drawForPath (g, framePath);
@@ -83,7 +90,7 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     // Section panels
     for (const auto& p : panels)
     {
-        const auto r = juce::Rectangle<float> ((float) p.x, 112.0f, (float) p.w, 352.0f);
+        const auto r = juce::Rectangle<float> ((float) p.x, (float) p.y, (float) p.w, (float) kPanelHeight);
         g.setColour (juce::Colours::white.withAlpha (0.76f));
         g.fillRoundedRectangle (r, 15.0f);
         {
@@ -95,18 +102,40 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
         g.setColour (p.colour.withAlpha (0.42f));
         g.drawRoundedRectangle (r, 15.0f, 1.0f);
         g.setColour (p.colour);
-        g.fillRoundedRectangle ((float) p.x + 12.0f, 122.0f, 6.0f, 19.0f, 3.0f);
+        g.fillRoundedRectangle ((float) p.x + 12.0f, (float) p.y + 10.0f, 6.0f, 19.0f, 3.0f);
         g.setFont (uiFont (15.0f));
         g.setColour (col::section);
-        g.drawText (p.title, p.x + 28, 128, p.w - 40, 16, juce::Justification::left, false);
+        g.drawText (p.title, p.x + 28, p.y + 16, p.w - 40, 16, juce::Justification::left, false);
     }
 
     drawLabel (g, "Loop On", 594, 166);
     drawLabel (g, "Mode", 1952, 177);
 
+    // Second row labels
+    drawLabel (g, "Shape", 58, 538);
+    drawLabel (g, "Sync", 236, 538);
+    drawLabel (g, "Division", 316, 538);
+    drawLabel (g, "Voice Mode", 1062, 538);
+
+    auto subHeading = [&g] (const char* text, int x, int y, juce::Colour c)
+    {
+        g.setFont (uiFont (12.0f));
+        g.setColour (c);
+        g.drawText (text, x, y - 12, 200, 15, juce::Justification::left, false);
+    };
+    subHeading ("CHORUS", 1656, 540, col::purple);
+    subHeading ("DELAY", 1886, 540, col::purple);
+    subHeading ("REVERB", 2176, 540, col::purple);
+    g.setColour (col::purple.withAlpha (0.2f));
+    g.fillRect (1868, 530, 1, 290);
+    g.fillRect (2158, 530, 1, 290);
+    drawLabel (g, "Sync", 1890, 703);
+    drawLabel (g, "Division", 1964, 703);
+    drawLabel (g, "Ping Pong", 2080, 703);
+
     g.setFont (uiFont (10.0f, false));
     g.setColour (col::tiny);
-    g.drawText (footer, 48, 490, 1200, 14, juce::Justification::left, false);
+    g.drawText (footer, 48, 860, 1200, 14, juce::Justification::left, false);
 }
 
 //==============================================================================
@@ -140,7 +169,35 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
       resonance (p.getAPVTS(), ids::resonance, "Resonance", col::resOrange),
       pan (p.getAPVTS(), ids::pan, "Pan", col::outGreen),
       width (p.getAPVTS(), ids::stereoWidth, "Stereo Width", col::outGreen),
-      outputGain (p.getAPVTS(), ids::outputGain, "Output Gain", col::outGreen)
+      outputGain (p.getAPVTS(), ids::outputGain, "Output Gain", col::outGreen),
+      voiceMode (*p.getAPVTS().getParameter (ids::voiceMode), { "Poly", "Mono", "Legato" }, col::orange, { 78, 78, 78 }, 6),
+      lfoRate (p.getAPVTS(), ids::lfoRate, "Rate", col::blue),
+      lfoToPitch (p.getAPVTS(), ids::lfoToPitch, "> Pitch", col::blue),
+      lfoToCutoff (p.getAPVTS(), ids::lfoToCutoff, "> Cutoff", col::blue),
+      lfoToAmp (p.getAPVTS(), ids::lfoToAmp, "> Amp", col::blue),
+      lfoToPan (p.getAPVTS(), ids::lfoToPan, "> Pan", col::blue),
+      lfoToGrainPos (p.getAPVTS(), ids::lfoToGrainPos, "> Grain Pos", col::blue),
+      fenvAttack (p.getAPVTS(), ids::fenvAttack, "Attack", col::cyan),
+      fenvDecay (p.getAPVTS(), ids::fenvDecay, "Decay", col::cyan),
+      fenvSustain (p.getAPVTS(), ids::fenvSustain, "Sustain", col::cyan),
+      fenvRelease (p.getAPVTS(), ids::fenvRelease, "Release", col::cyan),
+      fenvAmount (p.getAPVTS(), ids::fenvAmount, "Env Amount", col::cyan),
+      velToFilter (p.getAPVTS(), ids::velToFilter, "Vel > Filter", col::coral),
+      glide (p.getAPVTS(), ids::glide, "Glide", col::orange),
+      coarseTune (p.getAPVTS(), ids::coarseTune, "Coarse", col::orange),
+      fineTune (p.getAPVTS(), ids::fineTune, "Fine", col::orange),
+      unisonVoices (p.getAPVTS(), ids::unisonVoices, "Unison", col::orange),
+      unisonDetune (p.getAPVTS(), ids::unisonDetune, "Detune", col::orange),
+      drive (p.getAPVTS(), ids::drive, "Drive", col::coral),
+      chorusRate (p.getAPVTS(), ids::chorusRate, "Rate", col::purple),
+      chorusDepth (p.getAPVTS(), ids::chorusDepth, "Depth", col::purple),
+      chorusMix (p.getAPVTS(), ids::chorusMix, "Mix", col::purple),
+      delayTime (p.getAPVTS(), ids::delayTime, "Time", col::purple),
+      delayFeedback (p.getAPVTS(), ids::delayFeedback, "Feedback", col::purple),
+      delayMix (p.getAPVTS(), ids::delayMix, "Mix", col::purple),
+      reverbSize (p.getAPVTS(), ids::reverbSize, "Size", col::purple),
+      reverbDamping (p.getAPVTS(), ids::reverbDamping, "Damping", col::purple),
+      reverbMix (p.getAPVTS(), ids::reverbMix, "Mix", col::purple)
 {
     setLookAndFeel (&lookAndFeel);
     addAndMakeVisible (canvas);
@@ -177,6 +234,29 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
                      &release, &velocity, &polyphony, &grainSize, &grainDensity, &posRandom, &pitchRandom,
                      &stereoSpread, &formant, &cutoff, &resonance, &pan, &width, &outputGain })
         canvas.addAndMakeVisible (k);
+
+    for (auto* k : { &lfoRate, &lfoToPitch, &lfoToCutoff, &lfoToAmp, &lfoToPan, &lfoToGrainPos, &fenvAttack,
+                     &fenvDecay, &fenvSustain, &fenvRelease, &fenvAmount, &velToFilter, &glide, &coarseTune,
+                     &fineTune, &unisonVoices, &unisonDetune, &drive, &chorusRate, &chorusDepth, &chorusMix,
+                     &delayTime, &delayFeedback, &delayMix, &reverbSize, &reverbDamping, &reverbMix })
+        canvas.addAndMakeVisible (k);
+    canvas.addAndMakeVisible (voiceMode);
+
+    auto setupCombo = [this] (juce::ComboBox& box, const juce::StringArray& items, const char* id,
+                              std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>& att)
+    {
+        box.addItemList (items, 1);
+        canvas.addAndMakeVisible (box);
+        att = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (processor.getAPVTS(), id, box);
+    };
+    juce::StringArray divisions;
+    for (auto* d : lhss::kSyncDivisionNames) divisions.add (d);
+    setupCombo (lfoShapeBox, { "Sine", "Triangle", "Square", "Saw", "Random" }, ids::lfoShape, lfoShapeAttach);
+    setupCombo (lfoDivisionBox, divisions, ids::lfoDivision, lfoDivisionAttach);
+    setupCombo (delayDivisionBox, divisions, ids::delayDivision, delayDivisionAttach);
+    setupSwitch (lfoSyncSwitch, col::blue, ids::lfoSync, lfoSyncAttach);
+    setupSwitch (delaySyncSwitch, col::purple, ids::delaySync, delaySyncAttach);
+    setupSwitch (pingPongSwitch, col::purple, ids::delayPingPong, pingPongAttach);
 
     layoutCanvas();
     processor.getSampleBroadcaster().addChangeListener (this);
@@ -233,6 +313,41 @@ void LHSampleSynthEditor::layoutCanvas()
     placeKnob (pan, 2210, 189, 92, 112);
     placeKnob (width, 2315, 189, 92, 112);
     placeKnob (outputGain, 2262, 341, 92, 112);
+
+    // ---- Second row ------------------------------------------------------------------------
+    lfoShapeBox.setBounds (58, 546, 160, 32);
+    lfoSyncSwitch.setBounds (236, 549, 54, 26);
+    lfoDivisionBox.setBounds (316, 546, 110, 32);
+    const int lfoX[] = { 88, 180, 272, 364, 456, 548 };
+    juce::Component* lfoKnobs[] = { &lfoRate, &lfoToPitch, &lfoToCutoff, &lfoToAmp, &lfoToPan, &lfoToGrainPos };
+    for (int i = 0; i < 6; ++i) placeKnob (*lfoKnobs[i], lfoX[i], 640);
+
+    placeKnob (fenvAttack, 670, 540);
+    placeKnob (fenvDecay, 762, 540);
+    placeKnob (fenvSustain, 854, 540);
+    placeKnob (fenvRelease, 946, 540);
+    placeKnob (fenvAmount, 716, 690);
+    placeKnob (velToFilter, 900, 690);
+
+    voiceMode.setBounds (1062, 546, 246, 32);
+    const int voiceX[] = { 1090, 1174, 1258, 1342, 1426 };
+    juce::Component* voiceKnobs[] = { &glide, &coarseTune, &fineTune, &unisonVoices, &unisonDetune };
+    for (int i = 0; i < 5; ++i) placeKnob (*voiceKnobs[i], voiceX[i], 640, 84, 116);
+
+    placeKnob (drive, 1549, 640);
+
+    placeKnob (chorusRate, 1706, 562);
+    placeKnob (chorusDepth, 1796, 562);
+    placeKnob (chorusMix, 1751, 690);
+    placeKnob (delayTime, 1918, 562);
+    placeKnob (delayFeedback, 2012, 562);
+    placeKnob (delayMix, 2106, 562);
+    delaySyncSwitch.setBounds (1890, 712, 54, 26);
+    delayDivisionBox.setBounds (1964, 709, 100, 32);
+    pingPongSwitch.setBounds (2080, 712, 54, 26);
+    placeKnob (reverbSize, 2214, 562);
+    placeKnob (reverbDamping, 2306, 562);
+    placeKnob (reverbMix, 2260, 690);
 }
 
 void LHSampleSynthEditor::paint (juce::Graphics& g) { g.fillAll (juce::Colours::white); }
@@ -336,12 +451,19 @@ void LHSampleSynthEditor::refreshSampleInfo()
 
 void LHSampleSynthEditor::timerCallback()
 {
+    // Rate knobs are inactive while their tempo sync is on (and vice versa).
+    const bool lfoSynced = lfoSyncSwitch.getToggleState(), delaySynced = delaySyncSwitch.getToggleState();
+    lfoRate.setAlpha (lfoSynced ? 0.35f : 1.0f);
+    lfoDivisionBox.setAlpha (lfoSynced ? 1.0f : 0.45f);
+    delayTime.setAlpha (delaySynced ? 0.35f : 1.0f);
+    delayDivisionBox.setAlpha (delaySynced ? 1.0f : 0.45f);
+
     waveform.refreshIfParametersChanged();
     const int voices = processor.getActiveVoiceCount();
     if (voices != shownVoices)
     {
         shownVoices = voices;
         canvas.footer = "VST3 / AU / CLAP  |  Active voices: " + juce::String (voices) + " / 16  |  Open source (AGPLv3)";
-        canvas.repaint (0, 480, 1300, 40);
+        canvas.repaint (0, 850, 1300, 40);
     }
 }

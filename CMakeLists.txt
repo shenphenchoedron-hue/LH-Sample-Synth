@@ -75,6 +75,8 @@ set(LHSS_CORE_SOURCES
     src/dsp/MultimodeFilter.cpp
     src/dsp/FormantProcessor.cpp
     src/dsp/ParameterSmoother.cpp
+    src/dsp/Lfo.cpp
+    src/dsp/Effects.cpp
     src/parameters/ParameterLayout.cpp)
 
 set(LHSS_PLUGIN_SOURCES
@@ -120,6 +122,7 @@ if(LHSS_BUILD_TESTS)
         tests/TestMain.cpp
         tests/EngineTests.cpp
         tests/StateTests.cpp
+        tests/SynthTests.cpp
         ${LHSS_CORE_SOURCES}
         ${LHSS_PLUGIN_SOURCES})
     target_include_directories(LHSampleSynthTests PRIVATE src)

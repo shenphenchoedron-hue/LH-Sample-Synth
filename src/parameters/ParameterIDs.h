@@ -34,5 +34,44 @@ inline constexpr const char* outputGain      = "outputGain";
 inline constexpr const char* velocitySens    = "velocitySens";
 inline constexpr const char* polyphony       = "polyphony";
 
+// LFO
+inline constexpr const char* lfoShape        = "lfoShape";
+inline constexpr const char* lfoRate         = "lfoRate";
+inline constexpr const char* lfoSync         = "lfoSync";
+inline constexpr const char* lfoDivision     = "lfoDivision";
+inline constexpr const char* lfoToPitch      = "lfoToPitch";
+inline constexpr const char* lfoToCutoff     = "lfoToCutoff";
+inline constexpr const char* lfoToAmp        = "lfoToAmp";
+inline constexpr const char* lfoToPan        = "lfoToPan";
+inline constexpr const char* lfoToGrainPos   = "lfoToGrainPos";
+// Filter envelope
+inline constexpr const char* fenvAttack      = "fenvAttack";
+inline constexpr const char* fenvDecay       = "fenvDecay";
+inline constexpr const char* fenvSustain     = "fenvSustain";
+inline constexpr const char* fenvRelease     = "fenvRelease";
+inline constexpr const char* fenvAmount      = "fenvAmount";
+inline constexpr const char* velToFilter     = "velToFilter";
+// Voice
+inline constexpr const char* voiceMode       = "voiceMode";
+inline constexpr const char* glide           = "glide";
+inline constexpr const char* coarseTune      = "coarseTune";
+inline constexpr const char* fineTune        = "fineTune";
+inline constexpr const char* unisonVoices    = "unisonVoices";
+inline constexpr const char* unisonDetune    = "unisonDetune";
+inline constexpr const char* drive           = "drive";
+// Effects
+inline constexpr const char* chorusRate      = "chorusRate";
+inline constexpr const char* chorusDepth     = "chorusDepth";
+inline constexpr const char* chorusMix       = "chorusMix";
+inline constexpr const char* delayTime       = "delayTime";
+inline constexpr const char* delaySync       = "delaySync";
+inline constexpr const char* delayDivision   = "delayDivision";
+inline constexpr const char* delayFeedback   = "delayFeedback";
+inline constexpr const char* delayMix        = "delayMix";
+inline constexpr const char* delayPingPong   = "delayPingPong";
+inline constexpr const char* reverbSize      = "reverbSize";
+inline constexpr const char* reverbDamping   = "reverbDamping";
+inline constexpr const char* reverbMix       = "reverbMix";
+
 inline constexpr int parameterVersion = 1;
 } // namespace lhss::ids

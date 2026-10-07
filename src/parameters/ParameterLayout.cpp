@@ -1,5 +1,6 @@
 #include "ParameterLayout.h"
 #include "ParameterIDs.h"
+#include "../engine/EngineParams.h"
 
 namespace lhss
 {
@@ -19,8 +20,8 @@ Range skewed (float lo, float hi, float centre)
 
 juce::String timeText (float ms, int)
 {
-    if (ms < 10.0f)   return juce::String (ms, 1) + " ms";
-    if (ms < 1000.0f) return juce::String (juce::roundToInt (ms)) + " ms";
+    if (ms < 9.95f)                     return juce::String (ms, 1) + " ms";
+    if (juce::roundToInt (ms) < 1000)   return juce::String (juce::roundToInt (ms)) + " ms";
     return juce::String (ms / 1000.0f, 2) + " s";
 }
 
@@ -86,6 +87,14 @@ float parsePan (const juce::String& s)
 }
 
 float parsePlain (const juce::String& s) { return s.trim().getFloatValue(); }
+
+juce::String rateText (float v, int)     { return juce::String (v, v < 1.0f ? 2 : 1) + " Hz"; }
+juce::String semitoneText (float v, int) { return juce::String (v, 2) + " st"; }
+juce::String centText (float v, int)
+{
+    const int c = juce::roundToInt (v);
+    return (c > 0 ? "+" : "") + juce::String (c) + " ct";
+}
 
 std::unique_ptr<juce::AudioParameterFloat> makeFloat (const char* id, const char* name, Range range, float def,
                                                       juce::String (*text) (float, int),
@@ -165,6 +174,57 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add (makeFloat (ids::velocitySens, "Velocity", Range (0.0f, 1.0f), 1.0f, percentText, parsePercent));
     layout.add (std::make_unique<juce::AudioParameterInt> (pid (ids::polyphony), "Polyphony", 1, 16, 16));
+
+    // ---- LFO -----------------------------------------------------------------------------
+    juce::StringArray divisions;
+    for (auto* d : kSyncDivisionNames) divisions.add (d);
+
+    layout.add (std::make_unique<juce::AudioParameterChoice> (pid (ids::lfoShape), "LFO Shape",
+                                                              juce::StringArray { "Sine", "Triangle", "Square", "Saw", "Random" }, 0));
+    layout.add (makeFloat (ids::lfoRate, "LFO Rate", skewed (0.05f, 20.0f, 2.0f), 4.0f, rateText, parseHz));
+    layout.add (std::make_unique<juce::AudioParameterBool> (pid (ids::lfoSync), "LFO Sync", false));
+    layout.add (std::make_unique<juce::AudioParameterChoice> (pid (ids::lfoDivision), "LFO Division", divisions, 2));
+    layout.add (makeFloat (ids::lfoToPitch,    "LFO > Pitch",     skewed (0.0f, 12.0f, 1.0f), 0.0f, semitoneText));
+    layout.add (makeFloat (ids::lfoToCutoff,   "LFO > Cutoff",    Range (-1.0f, 1.0f), 0.0f, signedPercentText, parsePercent));
+    layout.add (makeFloat (ids::lfoToAmp,      "LFO > Amp",       Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+    layout.add (makeFloat (ids::lfoToPan,      "LFO > Pan",       Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+    layout.add (makeFloat (ids::lfoToGrainPos, "LFO > Grain Pos", Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+
+    // ---- Filter envelope -------------------------------------------------------------------
+    layout.add (makeFloat (ids::fenvAttack,  "Filter Attack",  skewed (0.5f, 10000.0f, 200.0f), 1.0f,   timeText, parseTime));
+    layout.add (makeFloat (ids::fenvDecay,   "Filter Decay",   skewed (1.0f, 20000.0f, 600.0f), 300.0f, timeText, parseTime));
+    layout.add (makeFloat (ids::fenvSustain, "Filter Sustain", Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+    layout.add (makeFloat (ids::fenvRelease, "Filter Release", skewed (1.0f, 20000.0f, 800.0f), 300.0f, timeText, parseTime));
+    layout.add (makeFloat (ids::fenvAmount,  "Filter Env Amount", Range (-1.0f, 1.0f), 0.0f, signedPercentText, parsePercent));
+    layout.add (makeFloat (ids::velToFilter, "Velocity > Filter", Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+
+    // ---- Voice -----------------------------------------------------------------------------
+    layout.add (std::make_unique<juce::AudioParameterChoice> (pid (ids::voiceMode), "Voice Mode",
+                                                              juce::StringArray { "Poly", "Mono", "Legato" }, 0));
+    layout.add (makeFloat (ids::glide, "Glide", skewed (0.0f, 2000.0f, 200.0f), 0.0f, timeText, parseTime));
+    layout.add (std::make_unique<juce::AudioParameterInt> (
+        pid (ids::coarseTune), "Coarse Tune", -24, 24, 0,
+        juce::AudioParameterIntAttributes().withStringFromValueFunction ([] (int v, int)
+                                           { return (v > 0 ? "+" : "") + juce::String (v) + " st"; })
+                                           .withValueFromStringFunction ([] (const juce::String& t) { return t.trim().getIntValue(); })));
+    layout.add (makeFloat (ids::fineTune, "Fine Tune", Range (-100.0f, 100.0f), 0.0f, centText));
+    layout.add (std::make_unique<juce::AudioParameterInt> (pid (ids::unisonVoices), "Unison", 1, kMaxUnison, 1));
+    layout.add (makeFloat (ids::unisonDetune, "Unison Detune", Range (0.0f, 50.0f), 12.0f, centText));
+    layout.add (makeFloat (ids::drive, "Drive", Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+
+    // ---- Effects ---------------------------------------------------------------------------
+    layout.add (makeFloat (ids::chorusRate,  "Chorus Rate",  skewed (0.05f, 5.0f, 0.8f), 0.8f, rateText, parseHz));
+    layout.add (makeFloat (ids::chorusDepth, "Chorus Depth", Range (0.0f, 1.0f), 0.5f, percentText, parsePercent));
+    layout.add (makeFloat (ids::chorusMix,   "Chorus Mix",   Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+    layout.add (makeFloat (ids::delayTime,   "Delay Time",   skewed (10.0f, 2000.0f, 300.0f), 375.0f, timeText, parseTime));
+    layout.add (std::make_unique<juce::AudioParameterBool> (pid (ids::delaySync), "Delay Sync", false));
+    layout.add (std::make_unique<juce::AudioParameterChoice> (pid (ids::delayDivision), "Delay Division", divisions, 12));
+    layout.add (makeFloat (ids::delayFeedback, "Delay Feedback", Range (0.0f, 0.95f), 0.35f, percentText, parsePercent));
+    layout.add (makeFloat (ids::delayMix,      "Delay Mix",      Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+    layout.add (std::make_unique<juce::AudioParameterBool> (pid (ids::delayPingPong), "Delay Ping Pong", false));
+    layout.add (makeFloat (ids::reverbSize,    "Reverb Size",    Range (0.0f, 1.0f), 0.6f, percentText, parsePercent));
+    layout.add (makeFloat (ids::reverbDamping, "Reverb Damping", Range (0.0f, 1.0f), 0.5f, percentText, parsePercent));
+    layout.add (makeFloat (ids::reverbMix,     "Reverb Mix",     Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
 
     return layout;
 }

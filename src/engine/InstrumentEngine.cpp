@@ -28,7 +28,12 @@ void InstrumentEngine::prepare (double hostSampleRate, int maxBlockSize)
     mixR.assign ((size_t) maxBlock, 0.0f);
 
     voiceManager.prepare (sampleRate, maxBlock);
-    filter.prepare (sampleRate);
+    lfo.prepare (sampleRate);
+    chorus.prepare (sampleRate);
+    delay.prepare (sampleRate, 2.5);
+    reverb.setSampleRate (sampleRate);
+    reverb.reset();
+    reverbActive = false;
 
     gainSmoother.reset (sampleRate, 0.03);
     panSmoother.reset (sampleRate, 0.03);
@@ -41,15 +46,16 @@ void InstrumentEngine::prepare (double hostSampleRate, int maxBlockSize)
     widthSmoother.setCurrentAndTarget (params.stereoWidth);
     formantSmoother.setCurrentAndTarget (params.formant);
     grainSizeSmoother.setCurrentAndTarget (params.grainSizeMs);
-    filter.setCutoff (params.cutoffHz);
-    filter.setResonance (params.resonance);
 }
 
 void InstrumentEngine::reset() noexcept
 {
     voiceManager.stopAll();
-    filter.reset();
-    pitchBendRatio = 1.0;
+    lfo.reset();
+    chorus.reset();
+    delay.reset();
+    reverb.reset();
+    pitchBendSemitones = 0.0;
 }
 
 void InstrumentEngine::setParameters (const EngineParams& p) noexcept
@@ -63,9 +69,7 @@ void InstrumentEngine::setParameters (const EngineParams& p) noexcept
     widthSmoother.setTarget (std::clamp (p.stereoWidth, 0.0f, 2.0f));
     formantSmoother.setTarget (std::clamp (p.formant, -1.0f, 1.0f));
     grainSizeSmoother.setTarget (std::clamp (p.grainSizeMs, 10.0f, 500.0f));
-    filter.setMode (static_cast<dsp::MultimodeFilter::Mode> (p.filterMode));
-    filter.setCutoff (p.cutoffHz);
-    filter.setResonance (p.resonance);
+    params.unisonVoices = std::clamp (p.unisonVoices, 1, kMaxUnison);
 }
 
 void InstrumentEngine::adoptPendingSample() noexcept
@@ -99,7 +103,7 @@ void InstrumentEngine::handleMidi (const juce::uint8* d, int numBytes) noexcept
         case 0xE0:
         {
             const int bend = (d2 << 7 | d1) - 8192;                  // ±2 semitones
-            pitchBendRatio = std::pow (2.0, (bend / 8192.0) * 2.0 / 12.0);
+            pitchBendSemitones = (bend / 8192.0) * 2.0;
             break;
         }
         default: break;
@@ -132,7 +136,7 @@ void InstrumentEngine::renderRange (juce::AudioBuffer<float>& buffer, int start,
     const int outChans = buffer.getNumChannels();
     while (numSamples > 0)
     {
-        const int n = std::min (numSamples, maxBlock);
+        const int n = std::min ({ numSamples, maxBlock, kModulationChunk });
         renderChunk (n);
 
         if (outChans >= 2)
@@ -158,12 +162,38 @@ void InstrumentEngine::renderChunk (int n) noexcept
     VoiceContext ctx;
     ctx.params = &params;
     ctx.hostRate = sampleRate;
-    ctx.pitchBendRatio = pitchBendRatio;
+    ctx.pitchBendSemitones = pitchBendSemitones;
     ctx.formant = formantSmoother.skip (n);
     ctx.grainSizeMs = grainSizeSmoother.skip (n);
+    const double lfoRate = params.lfoSync ? 1.0 / syncDivisionSeconds (params.lfoDivision, tempoBpm)
+                                          : static_cast<double> (params.lfoRateHz);
+    ctx.lfo = lfo.advance (static_cast<dsp::Lfo::Shape> (params.lfoShape), lfoRate, n);
+    ctx.unisonGain = 1.0f / std::sqrt (static_cast<float> (params.unisonVoices));
     voiceManager.render (ctx, mixL.data(), mixR.data(), n);
 
-    filter.process (mixL.data(), mixR.data(), n);
+    // Effects: chorus -> delay -> reverb (filter and drive live in each voice).
+    chorus.process (mixL.data(), mixR.data(), n, params.chorusRate, params.chorusDepth, params.chorusMix);
+    const double delaySeconds = params.delaySync ? syncDivisionSeconds (params.delayDivision, tempoBpm)
+                                                 : params.delayTimeMs * 0.001;
+    delay.process (mixL.data(), mixR.data(), n, std::min (delaySeconds, 2.4), params.delayFeedback,
+                   params.delayMix, params.delayPingPong);
+    if (params.reverbMix > 0.0005f)
+    {
+        juce::Reverb::Parameters rp;
+        rp.roomSize = std::clamp (params.reverbSize, 0.0f, 1.0f);
+        rp.damping = std::clamp (params.reverbDamping, 0.0f, 1.0f);
+        rp.wetLevel = params.reverbMix * 0.33f;
+        rp.dryLevel = 0.5f * (1.0f - 0.5f * params.reverbMix);
+        rp.width = 1.0f;
+        reverb.setParameters (rp);
+        reverb.processStereo (mixL.data(), mixR.data(), n);
+        reverbActive = true;
+    }
+    else if (reverbActive)
+    {
+        reverb.reset();
+        reverbActive = false;
+    }
 
     for (int i = 0; i < n; ++i)
     {

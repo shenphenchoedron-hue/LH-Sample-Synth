@@ -19,11 +19,14 @@ namespace lhss
 class VoiceManager
 {
 public:
-    static constexpr int kNumSlots = kMaxPolyphony + 8;
+    static constexpr int kMaxSounding = 32;              // polyphony x unison, capped
+    static constexpr int kNumSlots = kMaxSounding + 8;   // + room for fading (stolen) tails
 
     void prepare (double hostRate, int maxBlockSize);
 
-    /** Returns the voice that was started (nullptr if no sample). */
+    /** Starts a note: Poly allocates `unison` voices per note; Mono retriggers a single (unison)
+        voice group; Legato glides the sounding group to the new note without retriggering.
+        Returns the first voice started (nullptr if no sample / legato retarget). */
     Voice* noteOn (const SampleData* sample, int note, float velocity01, const EngineParams& params) noexcept;
     void noteOff (int note, const EngineParams& params) noexcept;
     void allNotesOff (const EngineParams& params) noexcept;
@@ -39,6 +42,16 @@ public:
 private:
     Voice* chooseVictim() noexcept;
     Voice* findFreeSlot() noexcept;
+    Voice* startGroup (const SampleData* sample, int note, float velocity01, const EngineParams& params, double glideFrom) noexcept;
+    bool monoGroupSounding() const noexcept;
+    void retargetMonoGroup (int note, const EngineParams& params) noexcept;
+    void pushHeld (int note) noexcept;
+    void removeHeld (int note) noexcept;
+
+    std::array<int, 16> held {};   // mono/legato note stack (last = newest)
+    int numHeld = 0;
+    int lastNote = -1;             // for glide in poly mode
+    int monoNote = -1;
 
     // Heap-allocated once at construction (each voice owns ~20 KB of grain/formant state);
     // never resized afterwards, so no allocation happens on the audio thread.

@@ -8,6 +8,8 @@ object, a field recording, a percussion hit) and it becomes the sound source you
 * Formats: **VST3**, **CLAP** (Windows, macOS, Linux) and **AU** (macOS only). A Standalone app is built too.
 * **Pitch mode** uses duration-preserving granular pitch shifting. A 1.2 s recording lasts about
   1.2 s at C2, C3 and C4. **Natural mode** uses classic resampling, so speed and pitch change together.
+* Synth section: LFO (tempo sync), filter envelope, velocity→filter, glide with Poly/Mono/Legato,
+  coarse/fine tune, unison, drive and a chorus/delay/reverb effect chain.
 * 16-voice polyphony, ADSR, One Shot / Gate, crossfaded looping, reverse, freeze, granular
   texture controls, LPC formant shifting, a multimode filter, and pan, width and output gain.
 * C++20, JUCE 8, CMake. License: AGPLv3.
@@ -76,6 +78,11 @@ Builds made locally on macOS are not signed. Run `codesign --force --deep -s - <
 | Granular | Grain Size (10–500 ms), Density (1–32 overlapping grains), Position Randomness, Pitch Randomness, Stereo Spread, Formant (−100…+100 %) |
 | Filter | Mode (Low Pass / High Pass / Band Pass), Cutoff, Resonance |
 | Output | Pan, Stereo Width (0–200 %), Output Gain (−48…+12 dB) |
+| LFO | Shape (Sine/Triangle/Square/Saw/Random), Rate or tempo Sync + Division, depth to Pitch (semitones), Cutoff, Amp (tremolo), Pan, Grain Position |
+| Filter Envelope | Attack, Decay, Sustain, Release, Env Amount (±6 octaves), Velocity > Filter |
+| Voice | Poly / Mono / Legato, Glide, Coarse (±24 st), Fine (±100 ct), Unison (1–4 voices), Detune |
+| Drive | Soft tanh saturation per voice (before the filter) |
+| Effects | Chorus (Rate, Depth, Mix), Delay (Time or Sync + Division, Feedback, Mix, Ping Pong), Reverb (Size, Damping, Mix) |
 
 Every control is an automatable parameter with a stable ID (`src/parameters/ParameterIDs.h`). The engine also responds to pitch bend (±2 semitones) and to CC 120 and CC 123.
 
@@ -88,7 +95,8 @@ src/engine/                InstrumentEngine (MIDI, mixing, output), VoiceManager
                            SampleData (immutable), SampleLoader, SampleStore (lock-free swapping),
                            SampleRegion (clamping)
 src/dsp/                   GranularPitchProcessor + Grain, NaturalPlaybackProcessor, FormantProcessor,
-                           MultimodeFilter, ParameterSmoother, SampleReader (shared interpolation/loop logic)
+                           MultimodeFilter, Lfo, Effects (chorus, delay, drive), ParameterSmoother,
+                           SampleReader (shared interpolation/loop logic)
 src/gui/                   WaveformView, Knob / ChoiceSegment, LHLookAndFeel
 src/parameters/            Parameter IDs and layout
 tests/                     Unit tests (JUCE UnitTest)
@@ -96,6 +104,12 @@ tests/                     Unit tests (JUCE UnitTest)
 
 The engine has no dependency on VST3, AU or CLAP. JUCE wraps the same processor for VST3, AU and
 Standalone, and clap-juce-extensions wraps it for CLAP.
+
+### Signal flow per voice
+source (Natural or granular) → formant → drive → filter (cutoff + filter env + LFO + velocity) →
+amp envelope × velocity × tremolo × pan → mix → chorus → delay → reverb → width/pan → gain → limiter.
+Modulation (LFO, glide, filter envelope) is evaluated every 64 samples; gains are ramped
+per sample. Granular grains follow glide/vibrato continuously.
 
 ### Granular pitch shifting
 Each voice runs two clocks. The **traversal** playhead moves through the file at its natural speed

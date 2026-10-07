@@ -6,7 +6,8 @@
 
 #include "EngineParams.h"
 #include "VoiceManager.h"
-#include "../dsp/MultimodeFilter.h"
+#include "../dsp/Effects.h"
+#include "../dsp/Lfo.h"
 #include "../dsp/ParameterSmoother.h"
 
 namespace lhss
@@ -25,6 +26,8 @@ public:
 
     /** Audio thread, once per block before process(). */
     void setParameters (const EngineParams& p) noexcept;
+    /** Host tempo for LFO / delay sync (audio thread, per block). */
+    void setTempo (double bpm) noexcept { tempoBpm = bpm > 1.0 ? bpm : 120.0; }
 
     /** Any non-audio thread: hand over a new immutable sample (see SampleStore). */
     void setPendingSample (const SampleData* sample) noexcept { pending.store (sample, std::memory_order_release); }
@@ -50,13 +53,20 @@ private:
     const SampleData* current = nullptr; // audio-thread only
 
     EngineParams params;
+    static constexpr int kModulationChunk = 64; // LFO / glide / filter-env resolution (samples)
+
     VoiceManager voiceManager;
-    dsp::MultimodeFilter filter;
+    dsp::Lfo lfo;
+    dsp::Chorus chorus;
+    dsp::StereoDelay delay;
+    juce::Reverb reverb;
+    bool reverbActive = false;
+    double tempoBpm = 120.0;
     dsp::ParameterSmoother gainSmoother, panSmoother, widthSmoother, formantSmoother, grainSizeSmoother;
 
     std::vector<float> mixL, mixR;
     double sampleRate = 44100.0;
     int maxBlock = 0;
-    double pitchBendRatio = 1.0;
+    double pitchBendSemitones = 0.0;
 };
 } // namespace lhss
