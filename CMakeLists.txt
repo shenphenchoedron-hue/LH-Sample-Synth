@@ -148,12 +148,13 @@ if(LHSS_BUILD_TESTS)
 endif()
 
 # ---------------------------------------------------------------------------------------------
-# Linux desktop integration for the Standalone app (icon + menu entry): cmake --install build
+# Linux desktop integration for the Standalone app (icon + menu entry):
+#   cmake --install build --component desktop
 # ---------------------------------------------------------------------------------------------
 if(UNIX AND NOT APPLE AND LHSS_BUILD_STANDALONE)
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/LHSampleSynth_artefacts/$<CONFIG>/Standalone/LH Sample Synth" DESTINATION bin)
-    install(FILES resources/logo-256.png DESTINATION share/icons/hicolor/256x256/apps RENAME lh-sample-synth.png)
-    install(FILES resources/logo-1024.png DESTINATION share/icons/hicolor/1024x1024/apps RENAME lh-sample-synth.png)
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/LHSampleSynth_artefacts/$<CONFIG>/Standalone/LH Sample Synth" DESTINATION bin COMPONENT desktop)
+    install(FILES resources/logo-256.png DESTINATION share/icons/hicolor/256x256/apps RENAME lh-sample-synth.png COMPONENT desktop)
+    install(FILES resources/logo-1024.png DESTINATION share/icons/hicolor/1024x1024/apps RENAME lh-sample-synth.png COMPONENT desktop)
     configure_file(resources/lh-sample-synth.desktop.in "${CMAKE_BINARY_DIR}/lh-sample-synth.desktop" @ONLY)
-    install(FILES "${CMAKE_BINARY_DIR}/lh-sample-synth.desktop" DESTINATION share/applications)
+    install(FILES "${CMAKE_BINARY_DIR}/lh-sample-synth.desktop" DESTINATION share/applications COMPONENT desktop)
 endif()
