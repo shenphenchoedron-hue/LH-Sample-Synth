@@ -48,6 +48,7 @@ private:
     Canvas canvas;
 
     juce::TextButton loadButton { "Load Sample" };
+    juce::TextButton resetButton { "Reset to Default" };
     juce::ComboBox rootNoteBox;
     juce::ParameterAttachment rootNoteAttachment;
     lhss::gui::ChoiceSegment playbackMode, triggerMode;

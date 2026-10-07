@@ -27,7 +27,7 @@ public:
     void mouseDrag (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
 
-    static constexpr int kLabelArea = 34;
+    static constexpr int kLabelArea = 38;
 
 private:
     enum Marker { SampleStart = 0, SampleEnd, LoopStart, LoopEnd, NumMarkers, None = -1 };

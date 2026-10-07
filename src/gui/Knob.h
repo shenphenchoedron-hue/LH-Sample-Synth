@@ -12,6 +12,9 @@ public:
           const juce::String& title, juce::Colour accent);
 
     juce::Slider& getSlider() noexcept { return slider; }
+
+    static constexpr int kTitleHeight = 19;
+    static constexpr int kBoxHeight = 27;
     void paint (juce::Graphics&) override;
     void resized() override;
 

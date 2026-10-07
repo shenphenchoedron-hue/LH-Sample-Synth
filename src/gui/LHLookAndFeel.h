@@ -46,10 +46,10 @@ public:
     void drawToggleButton (juce::Graphics&, juce::ToggleButton&, bool highlighted, bool down) override;
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool highlighted, bool down) override;
     void drawButtonText (juce::Graphics&, juce::TextButton&, bool highlighted, bool down) override;
-    juce::Font getTextButtonFont (juce::TextButton&, int) override { return uiFont (11.0f); }
+    juce::Font getTextButtonFont (juce::TextButton&, int) override { return uiFont (15.0f); }
     void drawComboBox (juce::Graphics&, int w, int h, bool down, int bx, int by, int bw, int bh, juce::ComboBox&) override;
-    juce::Font getComboBoxFont (juce::ComboBox&) override { return uiFont (11.0f); }
+    juce::Font getComboBoxFont (juce::ComboBox&) override { return uiFont (15.0f); }
     void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
-    juce::Font getPopupMenuFont() override { return uiFont (13.0f, false); }
+    juce::Font getPopupMenuFont() override { return uiFont (16.0f, false); }
 };
 } // namespace lhss::gui

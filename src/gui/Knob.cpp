@@ -26,24 +26,25 @@ Knob::Knob (juce::AudioProcessorValueTreeState& state, const juce::String& param
 void Knob::resized()
 {
     const int h = getHeight();
-    const int dial = h - 16 - 26;
-    slider.setBounds ((getWidth() - dial) / 2, 15, dial, dial);
+    const int dial = juce::jmin (getWidth(), h - kTitleHeight - kBoxHeight - 3);
+    slider.setBounds ((getWidth() - dial) / 2, kTitleHeight, dial, dial);
 }
 
 void Knob::paint (juce::Graphics& g)
 {
-    g.setFont (uiFont (11.0f));
+    g.setFont (uiFont (15.0f));
     g.setColour (colours::label);
-    g.drawText (title, getLocalBounds().removeFromTop (14), juce::Justification::centred, false);
+    g.drawFittedText (title, getLocalBounds().removeFromTop (kTitleHeight - 1), juce::Justification::centred, 1, 0.7f);
 
-    const auto box = juce::Rectangle<float> ((getWidth() - 56) * 0.5f, getHeight() - 23.0f, 56.0f, 22.0f);
+    const float boxW = juce::jmin (80.0f, (float) getWidth() - 2.0f);
+    const auto box = juce::Rectangle<float> ((getWidth() - boxW) * 0.5f, (float) (getHeight() - kBoxHeight - 1), boxW, (float) kBoxHeight);
     g.setColour (colours::boxBg);
     g.fillRoundedRectangle (box, 6.0f);
     g.setColour (colours::boxLine);
     g.drawRoundedRectangle (box, 6.0f, 1.0f);
-    g.setFont (uiFont (10.5f));
+    g.setFont (uiFont (14.5f));
     g.setColour (colours::value);
-    g.drawText (slider.getTextFromValue (slider.getValue()), box, juce::Justification::centred, false);
+    g.drawFittedText (slider.getTextFromValue (slider.getValue()), box.toNearestInt(), juce::Justification::centred, 1, 0.75f);
 }
 
 //==============================================================================

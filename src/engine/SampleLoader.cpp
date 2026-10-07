@@ -2,7 +2,20 @@
 
 namespace lhss
 {
-juce::String SampleLoader::supportedWildcard() { return "*.wav;*.wave;*.aif;*.aiff;*.aifc;*.flac;*.ogg"; }
+juce::String SampleLoader::supportedWildcard()
+{
+    // Native Linux dialogs (zenity) match patterns case-sensitively, so list every casing
+    // users actually have on disk (e.g. "Track.FLAC", "Take.Wav").
+    juce::StringArray patterns;
+    for (auto ext : { "wav", "wave", "aif", "aiff", "aifc", "flac", "ogg" })
+    {
+        const juce::String e (ext);
+        patterns.addIfNotAlreadyThere ("*." + e);
+        patterns.addIfNotAlreadyThere ("*." + e.toUpperCase());
+        patterns.addIfNotAlreadyThere ("*." + e.substring (0, 1).toUpperCase() + e.substring (1));
+    }
+    return patterns.joinIntoString (";");
+}
 
 SampleLoader::Result SampleLoader::loadFile (const juce::File& file)
 {

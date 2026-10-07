@@ -205,6 +205,50 @@ public:
                 }
         }
 
+        beginTest ("Reset to default restores every parameter and keeps the sample");
+        {
+            LHSampleSynthProcessor p;
+            expect (p.loadSampleSync (wavFile));
+            for (auto* param : p.getParameters()) param->setValueNotifyingHost (0.83f);
+            p.resetParametersToDefaults();
+            int wrong = 0;
+            for (auto* param : p.getParameters())
+                if (std::abs (param->getValue() - param->getDefaultValue()) > 1.0e-6f) ++wrong;
+            expectEquals (wrong, 0);
+            expect (p.getLoadedSample() != nullptr);
+            expect (p.getSampleStatus().state == LHSampleSynthProcessor::SampleState::Loaded);
+        }
+
+        beginTest ("FLAC files load (16 and 24 bit, upper-case extension)");
+        {
+            for (int bits : { 16, 24 })
+            {
+                const auto flac = dir.getChildFile ("Take_" + juce::String (bits) + ".FLAC");
+                flac.deleteFile();
+                {
+                    auto buffer = test::makeSine (330.0, 0.5, 96000.0, 2);
+                    juce::FlacAudioFormat format;
+                    std::unique_ptr<juce::OutputStream> stream (flac.createOutputStream().release());
+                    auto writer = format.createWriterFor (stream, juce::AudioFormatWriterOptions{}
+                                                                     .withSampleRate (96000.0)
+                                                                     .withNumChannels (2)
+                                                                     .withBitsPerSample (bits));
+                    expect (writer != nullptr);
+                    if (writer != nullptr) writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples());
+                }
+                const auto result = lhss::SampleLoader::loadFile (flac);
+                expect (result.ok(), result.error);
+                if (result.ok())
+                {
+                    expectEquals (result.sample->getNumFrames(), 48000);
+                    expectEquals (result.sample->getSampleRate(), 96000.0);
+                }
+            }
+            const auto wildcard = lhss::SampleLoader::supportedWildcard();
+            expect (juce::File ("x.FLAC").getFileName().matchesWildcard ("*.FLAC", false));
+            expect (wildcard.contains ("*.flac") && wildcard.contains ("*.FLAC") && wildcard.contains ("*.Flac"));
+        }
+
         beginTest ("Garbage state data is ignored");
         {
             LHSampleSynthProcessor p;

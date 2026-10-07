@@ -59,6 +59,9 @@ public:
     std::shared_ptr<const lhss::SampleData> getLoadedSample() const { return sampleStore.latest(); }
     SampleStatus getSampleStatus() const;
 
+    /** Sets every parameter back to its default (with host gestures). The loaded sample is kept. */
+    void resetParametersToDefaults();
+
     juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts; }
     juce::ChangeBroadcaster& getSampleBroadcaster() noexcept { return sampleBroadcaster; }
     lhss::EngineParams readParameters() const noexcept;

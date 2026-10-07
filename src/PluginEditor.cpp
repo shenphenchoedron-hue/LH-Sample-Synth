@@ -34,15 +34,15 @@ const Panel panels[] = {
 void drawLabel (juce::Graphics& g, const juce::String& text, int x, int baselineY, int width = 140,
                 juce::Justification j = juce::Justification::left)
 {
-    g.setFont (uiFont (11.0f));
+    g.setFont (uiFont (15.0f));
     g.setColour (col::label);
-    g.drawText (text, x, baselineY - 11, width, 14, j, false);
+    g.drawText (text, x, baselineY - 15, width, 19, j, false);
 }
 
 /** Places a knob centred on cx with its title starting at titleBaseline (design coords). */
-void placeKnob (juce::Component& k, int cx, int titleBaseline, int width = 92, int height = 116)
+void placeKnob (juce::Component& k, int cx, int titleBaseline, int width = 92, int height = 120)
 {
-    k.setBounds (cx - width / 2, titleBaseline - 11, width, height);
+    k.setBounds (cx - width / 2, titleBaseline - 15, width, height);
 }
 } // namespace
 
@@ -69,17 +69,17 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     title.append ("Sample", uiFont (34.0f), col::blue);
     title.append (" Synth", uiFont (34.0f), col::title);
     title.draw (g, { 48, 34, 290, 42 });
-    g.setFont (uiFont (12.0f));
+    g.setFont (uiFont (13.0f));
     g.setColour (col::subtitle);
-    g.drawText ("R E C O R D E D   S O U N D   I N S T R U M E N T", 50, 77, 300, 14, juce::Justification::left, false);
+    g.drawText ("R E C O R D E D   S O U N D   I N S T R U M E N T", 50, 77, 300, 16, juce::Justification::left, false);
 
     // File info
-    g.setFont (uiFont (11.0f));
+    g.setFont (uiFont (16.0f));
     g.setColour (fileError ? col::error : col::label);
-    g.drawText (fileName, 500, 44, 270, 14, juce::Justification::left, true);
-    g.setFont (uiFont (10.0f, false));
+    g.drawText (fileName, 496, 38, 280, 20, juce::Justification::left, true);
+    g.setFont (uiFont (14.0f, false));
     g.setColour (col::tiny);
-    g.drawText (fileInfo, 500, 66, 270, 14, juce::Justification::left, true);
+    g.drawText (fileInfo, 496, 62, 280, 18, juce::Justification::left, true);
 
     drawLabel (g, "Root Note", 790, 41);
     drawLabel (g, "Playback Mode", 890, 41);
@@ -103,9 +103,9 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
         g.drawRoundedRectangle (r, 15.0f, 1.0f);
         g.setColour (p.colour);
         g.fillRoundedRectangle ((float) p.x + 12.0f, (float) p.y + 10.0f, 6.0f, 19.0f, 3.0f);
-        g.setFont (uiFont (15.0f));
+        g.setFont (uiFont (19.0f));
         g.setColour (col::section);
-        g.drawText (p.title, p.x + 28, p.y + 16, p.w - 40, 16, juce::Justification::left, false);
+        g.drawText (p.title, p.x + 28, p.y + 9, p.w - 40, 22, juce::Justification::left, false);
     }
 
     drawLabel (g, "Loop On", 594, 166);
@@ -119,9 +119,9 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
 
     auto subHeading = [&g] (const char* text, int x, int y, juce::Colour c)
     {
-        g.setFont (uiFont (12.0f));
+        g.setFont (uiFont (15.0f));
         g.setColour (c);
-        g.drawText (text, x, y - 12, 200, 15, juce::Justification::left, false);
+        g.drawText (text, x, y - 15, 200, 19, juce::Justification::left, false);
     };
     subHeading ("CHORUS", 1656, 540, col::purple);
     subHeading ("DELAY", 1886, 540, col::purple);
@@ -133,9 +133,9 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     drawLabel (g, "Division", 1964, 703);
     drawLabel (g, "Ping Pong", 2080, 703);
 
-    g.setFont (uiFont (10.0f, false));
+    g.setFont (uiFont (14.0f, false));
     g.setColour (col::tiny);
-    g.drawText (footer, 48, 860, 1200, 14, juce::Justification::left, false);
+    g.drawText (footer, 48, 858, 1500, 18, juce::Justification::left, false);
 }
 
 //==============================================================================
@@ -203,7 +203,22 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
     addAndMakeVisible (canvas);
 
     loadButton.onClick = [this] { openFileChooser(); };
+    loadButton.setTooltip ("Load a WAV, AIFF, FLAC or OGG file");
     canvas.addAndMakeVisible (loadButton);
+
+    resetButton.setTooltip ("Set every control back to its default (the loaded sample is kept)");
+    resetButton.onClick = [this]
+    {
+        auto options = juce::MessageBoxOptions::makeOptionsOkCancel (
+            juce::MessageBoxIconType::QuestionIcon, "Reset to default",
+            "Set all controls back to their default positions?\nThe loaded sample is kept.",
+            "Reset", "Cancel", this);
+        juce::AlertWindow::showAsync (options, [safe = juce::Component::SafePointer<LHSampleSynthEditor> (this)] (int result)
+        {
+            if (result == 1 && safe != nullptr) safe->processor.resetParametersToDefaults();
+        });
+    };
+    canvas.addAndMakeVisible (resetButton);
 
     for (int n = 0; n < 128; ++n) rootNoteBox.addItem (lhss::midiNoteName (n), n + 1);
     rootNoteBox.onChange = [this] { rootNoteAttachment.setValueAsCompleteGesture ((float) (rootNoteBox.getSelectedId() - 1)); };
@@ -265,7 +280,14 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
     setResizable (true, true);
     setResizeLimits (kDesignWidth / 2, kDesignHeight / 2, kDesignWidth * 3 / 2, kDesignHeight * 3 / 2);
     if (auto* c = getConstrainer()) c->setFixedAspectRatio ((double) kDesignWidth / kDesignHeight);
-    setSize (kDesignWidth * 7 / 10, kDesignHeight * 7 / 10);
+    // Open as large as the screen comfortably allows (text scales with the window).
+    double scale = 0.8;
+    if (const auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+    {
+        const auto area = display->userBounds;
+        scale = juce::jlimit (0.5, 1.0, juce::jmin (area.getWidth() * 0.95 / kDesignWidth, area.getHeight() * 0.88 / kDesignHeight));
+    }
+    setSize (juce::roundToInt (kDesignWidth * scale), juce::roundToInt (kDesignHeight * scale));
     startTimerHz (30);
 }
 
@@ -279,10 +301,11 @@ void LHSampleSynthEditor::layoutCanvas()
 {
     canvas.setBounds (0, 0, kDesignWidth, kDesignHeight);
 
-    loadButton.setBounds (330, 39, 150, 34);
-    rootNoteBox.setBounds (780, 49, 92, 34);
-    playbackMode.setBounds (885, 49, 167, 34);
-    triggerMode.setBounds (1065, 49, 175, 34);
+    loadButton.setBounds (330, 39, 150, 38);
+    resetButton.setBounds (2192, 44, 170, 38);
+    rootNoteBox.setBounds (780, 49, 92, 38);
+    playbackMode.setBounds (885, 49, 167, 38);
+    triggerMode.setBounds (1065, 49, 175, 38);
     reverseSwitch.setBounds (1260, 52, 54, 26);
     freezeSwitch.setBounds (1340, 52, 54, 26);
 

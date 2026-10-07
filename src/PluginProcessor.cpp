@@ -203,6 +203,17 @@ bool LHSampleSynthProcessor::waitForPendingLoads (int timeoutMs)
     return true;
 }
 
+void LHSampleSynthProcessor::resetParametersToDefaults()
+{
+    for (auto* p : getParameters())
+        if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*> (p))
+        {
+            ranged->beginChangeGesture();
+            ranged->setValueNotifyingHost (ranged->getDefaultValue());
+            ranged->endChangeGesture();
+        }
+}
+
 void LHSampleSynthProcessor::timerCallback() { sampleStore.collectGarbage (engine); }
 
 //==============================================================================

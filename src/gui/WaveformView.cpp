@@ -139,9 +139,9 @@ void WaveformView::paint (juce::Graphics& g)
 
     if (sample == nullptr || message.isNotEmpty())
     {
-        g.setFont (uiFont (13.0f));
+        g.setFont (uiFont (16.0f));
         g.setColour (messageIsError ? colours::error : colours::tiny);
-        g.drawFittedText (message.isNotEmpty() ? message : juce::String ("Load a WAV / AIFF recording (or drop a file here)"),
+        g.drawFittedText (message.isNotEmpty() ? message : juce::String ("Load a WAV, AIFF, FLAC or OGG recording (or drop a file here)"),
                           area.reduced (20.0f, 10.0f).toNearestInt(), juce::Justification::centred, 3);
     }
 
@@ -159,7 +159,7 @@ void WaveformView::paint (juce::Graphics& g)
         g.fillRect (x - w * 0.5f, (float) kLabelArea - 6.0f, w, area.getBottom() - kLabelArea + 6.0f);
         g.fillRoundedRectangle (x - 6.0f, (float) kLabelArea - 17.0f, 12.0f, 12.0f, 3.0f);
         g.setFont (uiFont (9.5f));
-        const float lx = juce::jlimit (0.0f, (float) getWidth() - 80.0f, x - 40.0f);
+        const float lx = juce::jlimit (0.0f, (float) getWidth() - 100.0f, x - 50.0f);
         g.drawText (markerNames[m], juce::Rectangle<float> (lx, 0.0f, 80.0f, 13.0f), juce::Justification::centred, false);
     }
 }

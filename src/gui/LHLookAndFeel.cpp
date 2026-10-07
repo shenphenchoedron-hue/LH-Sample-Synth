@@ -107,7 +107,7 @@ void LHLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& b, co
 
 void LHLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool)
 {
-    g.setFont (uiFont (11.0f));
+    g.setFont (uiFont (15.0f));
     g.setColour (b.getToggleState() ? juce::Colours::white : juce::Colour (0xff2b3c50));
     g.drawText (b.getButtonText(), b.getLocalBounds(), juce::Justification::centred, false);
 }
@@ -130,7 +130,7 @@ void LHLookAndFeel::drawComboBox (juce::Graphics& g, int w, int h, bool, int, in
 void LHLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)
 {
     label.setBounds (box.getLocalBounds().withTrimmedRight (14));
-    label.setFont (uiFont (11.0f));
+    label.setFont (uiFont (15.0f));
     label.setJustificationType (juce::Justification::centred);
 }
 } // namespace lhss::gui
