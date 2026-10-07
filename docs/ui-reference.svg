@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="540" viewBox="0 0 2400 540">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fbfdff"/>
+    <stop offset="1" stop-color="#eef4f8"/>
+  </linearGradient>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#58708a" flood-opacity="0.18"/>
+  </filter>
+  <filter id="glowBlue" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glowPink" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glowPurple" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glowOrange" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glowGreen" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <style>
+    .title { font:700 34px Arial,Helvetica,sans-serif; fill:#13263d; }
+    .subtitle { font:600 12px Arial,Helvetica,sans-serif; fill:#7b91a8; letter-spacing:2px; }
+    .section { font:700 15px Arial,Helvetica,sans-serif; fill:#18304c; }
+    .label { font:600 11px Arial,Helvetica,sans-serif; fill:#263c56; }
+    .value { font:600 10.5px Arial,Helvetica,sans-serif; fill:#21354e; }
+    .tiny { font:500 10px Arial,Helvetica,sans-serif; fill:#63778f; }
+  </style>
+</defs>
+<rect width="2400" height="540" fill="#ffffff"/>
+<rect x="18" y="20" width="2364" height="500" rx="24" fill="url(#bg)" stroke="#d4e1ec" stroke-width="2" filter="url(#shadow)"/>
+
+<text x="48" y="66" class="title">LH <tspan fill="#1c72ff">Sample</tspan> Synth</text>
+<text x="50" y="87" class="subtitle">RECORDED SOUND INSTRUMENT</text>
+<rect x="330" y="39" width="150" height="34" rx="9" fill="#f5f9fc" stroke="#c8d6e2"/>
+<text x="405.0" y="61" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#2b3c50">▣  Load Sample</text>
+<text x="500" y="55" class="label">Glass_Bell.wav</text>
+<text x="500" y="76" class="tiny">2.31 s  |  48.0 kHz  |  Stereo</text>
+<text x="790" y="41" class="label">Root Note</text>
+<rect x="780" y="49" width="92" height="34" rx="9" fill="#f5f9fc" stroke="#c8d6e2"/>
+<text x="826.0" y="71" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#2b3c50">C3</text>
+<text x="890" y="41" class="label">Playback Mode</text>
+<rect x="885" y="49" width="88" height="34" rx="9" fill="#f5f9fc" stroke="#c8d6e2"/>
+<text x="929.0" y="71" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#2b3c50">Natural</text>
+<rect x="978" y="49" width="74" height="34" rx="9" fill="#1c72ff" stroke="#1c72ff" filter="url(#glowBlue)"/>
+<text x="1015.0" y="71" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#ffffff">Pitch</text>
+<text x="1070" y="41" class="label">Trigger Mode</text>
+<rect x="1065" y="49" width="96" height="34" rx="9" fill="#ff9d00" stroke="#ff9d00" filter="url(#glowOrange)"/>
+<text x="1113.0" y="71" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#ffffff">One Shot</text>
+<rect x="1166" y="49" width="74" height="34" rx="9" fill="#f5f9fc" stroke="#c8d6e2"/>
+<text x="1203.0" y="71" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#2b3c50">Gate</text>
+<text x="1260" y="42" class="label">Reverse</text>
+<rect x="1260" y="52" width="54" height="26" rx="13" fill="#8b2df5"/>
+<circle cx="1301" cy="65" r="10" fill="#ffffff"/>
+<text x="1340" y="42" class="label">Freeze</text>
+<rect x="1340" y="52" width="54" height="26" rx="13" fill="#bcc8d3"/>
+<circle cx="1353" cy="65" r="10" fill="#ffffff"/>
+<rect x="38" y="112" width="520" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#26d97b" stroke-opacity="0.42"/>
+<rect x="38" y="112" width="520" height="39" rx="15" fill="#26d97b" fill-opacity="0.08"/>
+<rect x="50" y="122" width="6" height="19" rx="3" fill="#26d97b"/>
+<text x="66" y="137" class="section">Sample</text>
+<rect x="570" y="112" width="292" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#ff9d00" stroke-opacity="0.42"/>
+<rect x="570" y="112" width="292" height="39" rx="15" fill="#ff9d00" fill-opacity="0.08"/>
+<rect x="582" y="122" width="6" height="19" rx="3" fill="#ff9d00"/>
+<text x="598" y="137" class="section">Loop</text>
+<rect x="874" y="112" width="420" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#ff2f91" stroke-opacity="0.42"/>
+<rect x="874" y="112" width="420" height="39" rx="15" fill="#ff2f91" fill-opacity="0.08"/>
+<rect x="886" y="122" width="6" height="19" rx="3" fill="#ff2f91"/>
+<text x="902" y="137" class="section">Envelope (ADSR)</text>
+<rect x="1306" y="112" width="604" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#8b2df5" stroke-opacity="0.42"/>
+<rect x="1306" y="112" width="604" height="39" rx="15" fill="#8b2df5" fill-opacity="0.08"/>
+<rect x="1318" y="122" width="6" height="19" rx="3" fill="#8b2df5"/>
+<text x="1334" y="137" class="section">Granular</text>
+<rect x="1922" y="112" width="230" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#20bde6" stroke-opacity="0.42"/>
+<rect x="1922" y="112" width="230" height="39" rx="15" fill="#20bde6" fill-opacity="0.08"/>
+<rect x="1934" y="122" width="6" height="19" rx="3" fill="#20bde6"/>
+<text x="1950" y="137" class="section">Filter</text>
+<rect x="2164" y="112" width="198" height="352" rx="15" fill="#ffffff" fill-opacity="0.76" stroke="#39d34a" stroke-opacity="0.42"/>
+<rect x="2164" y="112" width="198" height="39" rx="15" fill="#39d34a" fill-opacity="0.08"/>
+<rect x="2176" y="122" width="6" height="19" rx="3" fill="#39d34a"/>
+<text x="2192" y="137" class="section">Output</text>
+<rect x="58" y="182" width="480" height="165" rx="10" fill="#f8fbfd" stroke="#dde8f1"/>
+<rect x="100" y="182" width="140" height="165" fill="#26d97b" fill-opacity="0.08"/>
+<rect x="240" y="182" width="185" height="165" fill="#ff2f91" fill-opacity="0.06"/>
+<rect x="425" y="182" width="83" height="165" fill="#1c72ff" fill-opacity="0.05"/>
+<polygon points="68.0,264.5 71.6,259.1 75.1,254.2 78.7,247.3 82.3,247.4 85.8,245.2 89.4,233.3 93.0,228.6 96.5,227.1 100.1,243.0 103.7,233.2 107.2,233.9 110.8,226.0 114.4,235.1 117.9,241.2 121.5,234.5 125.1,231.0 128.6,228.9 132.2,240.5 135.8,239.0 139.3,239.5 142.9,228.7 146.4,236.4 150.0,239.3 153.6,240.6 157.1,234.2 160.7,231.5 164.3,239.0 167.8,242.2 171.4,243.5 175.0,232.1 178.5,238.3 182.1,238.2 185.7,246.2 189.2,237.7 192.8,234.8 196.4,238.4 199.9,241.6 203.5,246.8 207.1,235.9 210.6,240.7 214.2,238.0 217.8,248.4 221.3,241.5 224.9,238.5 228.5,238.7 232.0,241.5 235.6,249.9 239.2,240.1 242.7,243.0 246.3,238.5 249.9,248.1 253.4,245.3 257.0,242.4 260.6,239.8 264.1,242.1 267.7,249.4 271.3,244.2 274.8,244.6 278.4,239.7 282.0,248.2 285.5,248.8 289.1,246.4 292.7,241.5 296.2,243.2 299.8,248.0 303.3,248.2 306.9,246.6 310.5,241.6 314.0,248.7 317.6,248.4 321.2,250.3 324.7,243.7 328.3,244.8 331.9,247.1 335.4,251.6 339.0,248.9 342.6,243.8 346.1,248.3 349.7,247.8 353.3,253.9 356.8,246.2 360.4,246.8 364.0,246.9 367.5,251.3 371.1,251.2 374.7,246.4 378.2,248.5 381.8,247.8 385.4,256.2 388.9,248.8 392.5,249.0 396.1,247.2 399.6,251.2 403.2,253.4 406.8,249.1 410.3,249.2 413.9,248.2 417.5,255.1 421.0,251.4 424.6,251.5 428.2,248.0 431.7,251.5 435.3,254.2 438.9,251.8 442.4,250.4 446.0,249.1 449.6,254.0 453.1,253.9 456.7,253.9 460.2,249.2 463.8,252.2 467.4,253.4 470.9,254.5 474.5,251.8 478.1,250.3 481.6,253.4 485.2,254.6 488.8,255.9 492.3,250.7 495.9,253.1 499.5,253.0 503.0,256.9 506.6,253.3 510.2,251.7 513.7,253.2 517.3,254.4 520.9,257.3 524.4,252.4 528.0,254.2 528.0,274.8 524.4,276.6 520.9,271.7 517.3,274.6 513.7,275.8 510.2,277.3 506.6,275.7 503.0,272.1 499.5,276.0 495.9,275.9 492.3,278.3 488.8,273.1 485.2,274.4 481.6,275.6 478.1,278.7 474.5,277.2 470.9,274.5 467.4,275.6 463.8,276.8 460.2,279.8 456.7,275.1 453.1,275.1 449.6,275.0 446.0,279.9 442.4,278.6 438.9,277.2 435.3,274.8 431.7,277.5 428.2,281.0 424.6,277.5 421.0,277.6 417.5,273.9 413.9,280.8 410.3,279.8 406.8,279.9 403.2,275.6 399.6,277.8 396.1,281.8 392.5,280.0 388.9,280.2 385.4,272.8 381.8,281.2 378.2,280.5 374.7,282.6 371.1,277.8 367.5,277.7 364.0,282.1 360.4,282.2 356.8,282.8 353.3,275.1 349.7,281.2 346.1,280.7 342.6,285.2 339.0,280.1 335.4,277.4 331.9,281.9 328.3,284.2 324.7,285.3 321.2,278.7 317.6,280.6 314.0,280.3 310.5,287.4 306.9,282.4 303.3,280.8 299.8,281.0 296.2,285.8 292.7,287.5 289.1,282.6 285.5,280.2 282.0,280.8 278.4,289.3 274.8,284.4 271.3,284.8 267.7,279.6 264.1,286.9 260.6,289.2 257.0,286.6 253.4,283.7 249.9,280.9 246.3,290.5 242.7,286.0 239.2,288.9 235.6,279.1 232.0,287.5 228.5,290.3 224.9,290.5 221.3,287.5 217.8,280.6 214.2,291.0 210.6,288.3 207.1,293.1 203.5,282.2 199.9,287.4 196.4,290.6 192.8,294.2 189.2,291.3 185.7,282.8 182.1,290.8 178.5,290.7 175.0,296.9 171.4,285.5 167.8,286.8 164.3,290.0 160.7,297.5 157.1,294.8 153.6,288.4 150.0,289.7 146.4,292.6 142.9,300.3 139.3,289.5 135.8,290.0 132.2,288.5 128.6,300.1 125.1,298.0 121.5,294.5 117.9,287.8 114.4,293.9 110.8,303.0 107.2,295.1 103.7,295.8 100.1,286.0 96.5,301.9 93.0,300.4 89.4,295.7 85.8,283.8 82.3,281.6 78.7,281.7 75.1,274.8 71.6,269.9 68.0,264.5" fill="#8295a9" fill-opacity="0.84"/>
+<line x1="98" y1="176" x2="98" y2="352" stroke="#26d97b" stroke-width="3"/>
+<rect x="92" y="165" width="12" height="12" rx="3" fill="#26d97b"/>
+<text x="98" y="158" text-anchor="middle" font-family="Arial" font-size="9.5" font-weight="700" fill="#26d97b">Sample Start</text>
+<line x1="240" y1="176" x2="240" y2="352" stroke="#ff9d00" stroke-width="3"/>
+<rect x="234" y="165" width="12" height="12" rx="3" fill="#ff9d00"/>
+<text x="240" y="158" text-anchor="middle" font-family="Arial" font-size="9.5" font-weight="700" fill="#ff9d00">Loop Start</text>
+<line x1="425" y1="176" x2="425" y2="352" stroke="#ff2f91" stroke-width="3"/>
+<rect x="419" y="165" width="12" height="12" rx="3" fill="#ff2f91"/>
+<text x="425" y="158" text-anchor="middle" font-family="Arial" font-size="9.5" font-weight="700" fill="#ff2f91">Loop End</text>
+<line x1="508" y1="176" x2="508" y2="352" stroke="#1c72ff" stroke-width="3"/>
+<rect x="502" y="165" width="12" height="12" rx="3" fill="#1c72ff"/>
+<text x="508" y="158" text-anchor="middle" font-family="Arial" font-size="9.5" font-weight="700" fill="#1c72ff">Sample End</text>
+<text x="150" y="365" text-anchor="middle" class="label">Sample Start</text>
+<circle cx="150" cy="405" r="25" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 129.4,429.5 A 32,32 0 0 1 119.1,413.3" fill="none" stroke="#26d97b" stroke-width="7" stroke-linecap="round" filter="url(#glowGreen)"/>
+<line x1="150" y1="405" x2="135.5" y2="408.9" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="125" y="440" width="50" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="150" y="455" text-anchor="middle" class="value">0.00 s</text>
+<text x="355" y="365" text-anchor="middle" class="label">Sample End</text>
+<circle cx="355" cy="405" r="25" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 334.4,429.5 A 32,32 0 1 1 386.5,410.6" fill="none" stroke="#1c72ff" stroke-width="7" stroke-linecap="round" filter="url(#glowBlue)"/>
+<line x1="355" y1="405" x2="369.8" y2="407.6" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="330" y="440" width="50" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="355" y="455" text-anchor="middle" class="value">2.31 s</text>
+<text x="594" y="166" class="label">Loop On</text>
+<rect x="594" y="176" width="54" height="26" rx="13" fill="#ff9d00"/>
+<circle cx="635" cy="189" r="10" fill="#ffffff"/>
+<text x="628" y="237" text-anchor="middle" class="label">Loop Start</text>
+<circle cx="628" cy="278" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 606.8,303.3 A 33,33 0 0 1 601.0,259.1" fill="none" stroke="#ff9d00" stroke-width="7" stroke-linecap="round" filter="url(#glowOrange)"/>
+<line x1="628" y1="278" x2="615.2" y2="269.1" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="602" y="314" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="628" y="329" text-anchor="middle" class="value">0.42 s</text>
+<text x="725" y="237" text-anchor="middle" class="label">Loop End</text>
+<circle cx="725" cy="278" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 703.8,303.3 A 33,33 0 0 1 743.9,251.0" fill="none" stroke="#ff9d00" stroke-width="7" stroke-linecap="round" filter="url(#glowOrange)"/>
+<line x1="725" y1="278" x2="733.9" y2="265.2" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="699" y="314" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="725" y="329" text-anchor="middle" class="value">1.68 s</text>
+<text x="812" y="237" text-anchor="middle" class="label">Crossfade</text>
+<circle cx="812" cy="278" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 790.8,303.3 A 33,33 0 0 1 803.5,246.1" fill="none" stroke="#ff9d00" stroke-width="7" stroke-linecap="round" filter="url(#glowOrange)"/>
+<line x1="812" y1="278" x2="808.0" y2="262.9" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="786" y="314" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="812" y="329" text-anchor="middle" class="value">50 ms</text>
+<text x="925" y="207" text-anchor="middle" class="label">Attack</text>
+<circle cx="925" cy="250" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 902.5,276.8 A 35,35 0 0 1 890.1,246.9" fill="none" stroke="#ff2f91" stroke-width="7" stroke-linecap="round" filter="url(#glowPink)"/>
+<line x1="925" y1="250" x2="908.3" y2="248.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="897" y="288" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="925" y="303" text-anchor="middle" class="value">5.0 ms</text>
+<text x="1015" y="207" text-anchor="middle" class="label">Decay</text>
+<circle cx="1015" cy="250" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 992.5,276.8 A 35,35 0 0 1 990.3,225.3" fill="none" stroke="#ff2f91" stroke-width="7" stroke-linecap="round" filter="url(#glowPink)"/>
+<line x1="1015" y1="250" x2="1003.1" y2="238.1" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="987" y="288" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1015" y="303" text-anchor="middle" class="value">250 ms</text>
+<text x="1105" y="207" text-anchor="middle" class="label">Sustain</text>
+<circle cx="1105" cy="250" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1082.5,276.8 A 35,35 0 0 1 1122.5,219.7" fill="none" stroke="#ff2f91" stroke-width="7" stroke-linecap="round" filter="url(#glowPink)"/>
+<line x1="1105" y1="250" x2="1113.4" y2="235.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1077" y="288" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1105" y="303" text-anchor="middle" class="value">-6.0 dB</text>
+<text x="1195" y="207" text-anchor="middle" class="label">Release</text>
+<circle cx="1195" cy="250" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1172.5,276.8 A 35,35 0 0 1 1166.3,229.9" fill="none" stroke="#ff2f91" stroke-width="7" stroke-linecap="round" filter="url(#glowPink)"/>
+<line x1="1195" y1="250" x2="1181.2" y2="240.4" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1167" y="288" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1195" y="303" text-anchor="middle" class="value">400 ms</text>
+<text x="970" y="353" text-anchor="middle" class="label">Velocity</text>
+<circle cx="970" cy="392" r="24" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 950.1,415.7 A 31,31 0 1 1 1000.9,394.7" fill="none" stroke="#ff5b78" stroke-width="7" stroke-linecap="round" filter="url(#glowPink)"/>
+<line x1="970" y1="392" x2="984.3" y2="393.3" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="946" y="426" width="48" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="970" y="441" text-anchor="middle" class="value">100 %</text>
+<text x="1138" y="353" text-anchor="middle" class="label">Polyphony</text>
+<circle cx="1138" cy="392" r="24" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1118.1,415.7 A 31,31 0 1 1 1164.8,376.5" fill="none" stroke="#20bde6" stroke-width="7" stroke-linecap="round" filter="url(#glowCyan)"/>
+<line x1="1138" y1="392" x2="1150.5" y2="384.8" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1114" y="426" width="48" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1138" y="441" text-anchor="middle" class="value">16</text>
+<text x="1360" y="213" text-anchor="middle" class="label">Grain Size</text>
+<circle cx="1360" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1338.1,281.0 A 34,34 0 0 1 1330.6,238.0" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1360" y1="255" x2="1346.0" y2="246.9" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1333" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1360" y="307" text-anchor="middle" class="value">80 ms</text>
+<text x="1455" y="213" text-anchor="middle" class="label">Density</text>
+<circle cx="1455" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1433.1,281.0 A 34,34 0 0 1 1443.4,223.1" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1455" y1="255" x2="1449.5" y2="239.8" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1428" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1455" y="307" text-anchor="middle" class="value">8.0</text>
+<text x="1550" y="213" text-anchor="middle" class="label">Position Rand</text>
+<circle cx="1550" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1528.1,281.0 A 34,34 0 0 1 1555.9,221.5" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1550" y1="255" x2="1552.8" y2="239.0" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1523" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1550" y="307" text-anchor="middle" class="value">25 %</text>
+<text x="1645" y="213" text-anchor="middle" class="label">Pitch Rand</text>
+<circle cx="1645" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1623.1,281.0 A 34,34 0 0 1 1621.0,231.0" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1645" y1="255" x2="1633.5" y2="243.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1618" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1645" y="307" text-anchor="middle" class="value">10 %</text>
+<text x="1740" y="213" text-anchor="middle" class="label">Stereo Spread</text>
+<circle cx="1740" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1718.1,281.0 A 34,34 0 1 1 1764.0,231.0" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1740" y1="255" x2="1751.5" y2="243.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1713" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1740" y="307" text-anchor="middle" class="value">60 %</text>
+<text x="1835" y="213" text-anchor="middle" class="label">Formant</text>
+<circle cx="1835" cy="255" r="27" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1813.1,281.0 A 34,34 0 0 1 1832.0,221.1" fill="none" stroke="#8b2df5" stroke-width="7" stroke-linecap="round" filter="url(#glowPurple)"/>
+<line x1="1835" y1="255" x2="1833.6" y2="238.9" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1808" y="292" width="54" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1835" y="307" text-anchor="middle" class="value">0 %</text>
+<text x="1952" y="177" class="label">Mode</text>
+<rect x="1942" y="186" width="185" height="34" rx="9" fill="#f5f9fc" stroke="#c8d6e2"/>
+<text x="2034.5" y="208" text-anchor="middle" font-family="Arial" font-size="11" font-weight="700" fill="#2b3c50">Low Pass</text>
+<text x="1977" y="263" text-anchor="middle" class="label">Cutoff</text>
+<circle cx="1977" cy="306" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 1954.5,332.8 A 35,35 0 0 1 1991.8,274.3" fill="none" stroke="#20bde6" stroke-width="7" stroke-linecap="round" filter="url(#glowCyan)"/>
+<line x1="1977" y1="306" x2="1984.1" y2="290.8" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="1949" y="344" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="1977" y="359" text-anchor="middle" class="value">2.8 kHz</text>
+<text x="2094" y="263" text-anchor="middle" class="label">Resonance</text>
+<circle cx="2094" cy="306" r="28" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 2071.5,332.8 A 35,35 0 0 1 2076.5,275.7" fill="none" stroke="#ff8b00" stroke-width="7" stroke-linecap="round" filter="url(#glowOrange)"/>
+<line x1="2094" y1="306" x2="2085.6" y2="291.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="2066" y="344" width="56" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="2094" y="359" text-anchor="middle" class="value">0.35</text>
+<text x="2210" y="189" text-anchor="middle" class="label">Pan</text>
+<circle cx="2210" cy="230" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 2188.8,255.3 A 33,33 0 0 1 2207.1,197.1" fill="none" stroke="#39d34a" stroke-width="7" stroke-linecap="round" filter="url(#glowGreen)"/>
+<line x1="2210" y1="230" x2="2208.6" y2="214.5" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="2184" y="266" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="2210" y="281" text-anchor="middle" class="value">0 %</text>
+<text x="2315" y="189" text-anchor="middle" class="label">Stereo Width</text>
+<circle cx="2315" cy="230" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 2293.8,255.3 A 33,33 0 1 1 2347.9,232.9" fill="none" stroke="#39d34a" stroke-width="7" stroke-linecap="round" filter="url(#glowGreen)"/>
+<line x1="2315" y1="230" x2="2330.5" y2="231.4" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="2289" y="266" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="2315" y="281" text-anchor="middle" class="value">100 %</text>
+<text x="2262" y="341" text-anchor="middle" class="label">Output Gain</text>
+<circle cx="2262" cy="382" r="26" fill="#edf2f7" stroke="#c8d4df" stroke-width="2"/>
+<path d="M 2240.8,407.3 A 33,33 0 1 1 2285.3,358.7" fill="none" stroke="#39d34a" stroke-width="7" stroke-linecap="round" filter="url(#glowGreen)"/>
+<line x1="2262" y1="382" x2="2273.0" y2="371.0" stroke="#21364f" stroke-width="3" stroke-linecap="round"/>
+<rect x="2236" y="418" width="52" height="22" rx="6" fill="#f8fbfd" stroke="#d4dfe8"/>
+<text x="2262" y="433" text-anchor="middle" class="value">0.0 dB</text>
+<text x="48" y="500" class="tiny">Full control layout · VST3 / AU / CLAP · JUCE UI reference</text>
+</svg>
