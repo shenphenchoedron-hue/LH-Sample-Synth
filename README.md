@@ -7,8 +7,12 @@ object, a field recording, a percussion hit) and it becomes the sound source you
 
 * Formats: **VST3**, **CLAP** (Windows, macOS, Linux) and **AU** (macOS only). A Standalone app is built too.
 * **Pitch mode** uses duration-preserving granular pitch shifting. A 1.2 s recording lasts about
-  1.2 s at C2, C3 and C4. **Natural mode** uses classic resampling, so speed and pitch change together.
-* Synth section: LFO (tempo sync), filter envelope, velocity→filter, glide with Poly/Mono/Legato,
+  1.2 s at C3, C4 and C5. **Natural mode** uses classic resampling, so speed and pitch change together.
+* **Automatic tuning:** every loaded sample is analysed (YIN pitch detection). Root Note and Root Tune
+  (cents) are set from the detected pitch, so each key plays at its equal-tempered pitch (A4 = 440 Hz)
+  and fits other music. Sounds without a clear pitch (noise, clicks, melodies) play as recorded on C4 (MIDI 60).
+  Projects keep their saved tuning; **Tune to Pitch** re-applies the analysis.
+* Synth section: LFO (on/off switch, tempo sync), filter envelope, velocity→filter, glide with Poly/Mono/Legato,
   coarse/fine tune, unison, drive and a chorus/delay/reverb effect chain.
 * 16-voice polyphony, ADSR, One Shot / Gate, crossfaded looping, reverse, freeze, granular
   texture controls, LPC formant shifting, a multimode filter, and pan, width and output gain.
@@ -92,14 +96,14 @@ Builds made locally on macOS are not signed. Run `codesign --force --deep -s - <
 
 | Section | Controls |
 |---|---|
-| Header | Load Sample (or drag and drop a WAV/AIFF/FLAC/OGG file), file name / duration / sample rate / channels, Root Note (default C3 = MIDI 60), Natural / Pitch, One Shot / Gate, Reverse, Freeze, Reset to Default |
+| Header | Load Sample (or drag and drop a WAV/AIFF/FLAC/OGG file), file name / duration / sample rate / channels, Root Note (set from the detected pitch on load; C4 = MIDI 60 for unpitched sounds), Natural / Pitch, One Shot / Gate, Reverse, Freeze, Detected Pitch + Tune to Pitch, Reset to Default |
 | Sample | Waveform with draggable Sample Start, Sample End, Loop Start and Loop End markers. Sample Start and Sample End knobs |
 | Loop | Loop On, Loop Start, Loop End, Crossfade (0–1000 ms) |
 | Envelope | Attack, Decay, Sustain, Release, Velocity (sensitivity), Polyphony (1–16) |
 | Granular | Grain Size (10–500 ms), Density (1–32 overlapping grains), Position Randomness, Pitch Randomness, Stereo Spread, Formant (−100…+100 %) |
 | Filter | Mode (Low Pass / High Pass / Band Pass), Cutoff, Resonance |
 | Output | Pan, Stereo Width (0–200 %), Output Gain (−48…+12 dB) |
-| LFO | Shape (Sine/Triangle/Square/Saw/Random), Rate or tempo Sync + Division, depth to Pitch (semitones), Cutoff, Amp (tremolo), Pan, Grain Position |
+| LFO | On/off switch (off = no modulation), Shape (Sine/Triangle/Square/Saw/Random), Rate or tempo Sync + Division, depth to Pitch (semitones), Cutoff, Amp (tremolo), Pan, Grain Position |
 | Filter Envelope | Attack, Decay, Sustain, Release, Env Amount (±6 octaves), Velocity > Filter |
 | Voice | Poly / Mono / Legato, Glide, Coarse (±24 st), Fine (±100 ct), Unison (1–4 voices), Detune |
 | Drive | Soft tanh saturation per voice (before the filter) |

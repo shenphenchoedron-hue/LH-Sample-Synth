@@ -3,6 +3,8 @@
 #include "TestHelpers.h"
 #include "engine/Envelope.h"
 #include "engine/SampleRegion.h"
+#include "engine/PitchDetector.h"
+#include "parameters/ParameterLayout.h"
 
 using namespace lhss;
 using namespace lhss::test;
@@ -127,7 +129,7 @@ public:
 
     void runTest() override
     {
-        beginTest ("Pitch mode keeps duration at C2, C3 and C4");
+        beginTest ("Pitch mode keeps duration at MIDI 48, 60 and 72");
         for (int note : { 48, 60, 72 })
         {
             auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
@@ -135,6 +137,24 @@ public:
             f.apply();
             const double seconds = measureLifetime (f.engine, note) / 48000.0;
             expectWithinAbsoluteError (seconds, 1.2, 0.12, "note " + juce::String (note) + " lasted " + juce::String (seconds));
+        }
+
+        beginTest ("Pitch mode keeps the audible duration across the 88-key range");
+        for (int note : { 21, 33, 45, 57, 69, 81, 93, 108 })
+        {
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
+            f.params.playbackMode = PlaybackMode::Pitch;
+            f.apply();
+            std::vector<float> out;
+            measureLifetime (f.engine, note, &out);
+            float peak = 0.0f;
+            for (auto v : out) peak = std::max (peak, std::abs (v));
+            size_t last = 0;
+            for (size_t i = 0; i < out.size(); ++i)
+                if (std::abs (out[i]) > peak * 0.1f) last = i;
+            const double seconds = (double) last / 48000.0;
+            logMessage ("note " + juce::String (note) + " audible " + juce::String (seconds, 3) + " s");
+            expectWithinAbsoluteError (seconds, 1.2, 0.12, "note " + juce::String (note) + " audible for " + juce::String (seconds));
         }
 
         beginTest ("Pitch mode actually transposes (octave up / down)");
@@ -518,6 +538,160 @@ public:
     }
 };
 
+//==============================================================================
+class PitchDetectionTests final : public juce::UnitTest
+{
+public:
+    PitchDetectionTests() : juce::UnitTest ("Pitch detection & auto-tuning", "LHSampleSynth") {}
+
+    static double midiOf (double hz) { return 69.0 + 12.0 * std::log2 (hz / 440.0); }
+
+    /** Harmonic tone (1/k partials) with a short noisy attack and an exponential decay, like a plucked string. */
+    static juce::AudioBuffer<float> pluck (double f0, double seconds, double sr)
+    {
+        const int n = static_cast<int> (seconds * sr);
+        juce::AudioBuffer<float> b (1, n);
+        juce::Random rng (7);
+        for (int i = 0; i < n; ++i)
+        {
+            const double t = i / sr;
+            double v = 0.0;
+            for (int k = 1; k <= 8 && k * f0 < sr * 0.45; ++k)
+                v += std::sin (2.0 * juce::MathConstants<double>::pi * k * f0 * t + k) / k;
+            v *= 0.3 * std::exp (-t * 2.5);
+            if (t < 0.02) v += (rng.nextFloat() - 0.5f) * 0.8f; // noisy attack
+            b.setSample (0, i, static_cast<float> (v));
+        }
+        return b;
+    }
+
+    void runTest() override
+    {
+        beginTest ("Sine tones are detected within 3 cents (44.1 / 48 / 96 kHz)");
+        for (double sr : { 44100.0, 48000.0, 96000.0 })
+            for (double hz : { 55.0, 98.0, 220.0, 261.63, 440.0, 880.0, 1500.0, 3000.0 })
+            {
+                const auto pitch = PitchDetector::analyse (makeSine (hz, 1.0, sr), sr);
+                expect (pitch.valid, juce::String (hz) + " Hz @ " + juce::String (sr));
+                expectWithinAbsoluteError (pitch.midiNote, midiOf (hz), 0.03, juce::String (hz) + " Hz @ " + juce::String (sr));
+            }
+
+        beginTest ("Detuned sample: nearest note and cent offset");
+        {
+            const double hz = 440.0 * std::pow (2.0, 30.0 / 1200.0); // A + 30 ct
+            const auto pitch = PitchDetector::analyse (makeSine (hz, 1.0, 48000.0), 48000.0);
+            expect (pitch.valid);
+            expectEquals (pitch.nearestNote(), 69);
+            expectWithinAbsoluteError (pitch.centsOffset(), 30.0f, 3.0f);
+            const auto flat = PitchDetector::analyse (makeSine (440.0 * std::pow (2.0, -45.0 / 1200.0), 1.0, 48000.0), 48000.0);
+            expectEquals (flat.nearestNote(), 69);
+            expectWithinAbsoluteError (flat.centsOffset(), -45.0f, 3.0f);
+        }
+
+        beginTest ("Harmonic, decaying tones with a noisy attack (no octave errors)");
+        for (double hz : { 73.42, 146.83, 329.63, 659.26 })
+        {
+            const auto pitch = PitchDetector::analyse (pluck (hz, 1.5, 44100.0), 44100.0);
+            expect (pitch.valid, juce::String (hz) + " Hz");
+            expectWithinAbsoluteError (pitch.midiNote, midiOf (hz), 0.1, juce::String (hz) + " Hz");
+        }
+
+        beginTest ("Glass-like sound (beating, inharmonic partials): the dominant partial within 5 cents");
+        {
+            // Modelled on a struck wine glass: dominant mode at 3023 Hz with beating neighbours and an
+            // inharmonic lower mode, decaying over 0.8 s.
+            const double sr = 44100.0;
+            const int n = static_cast<int> (0.8 * sr);
+            juce::AudioBuffer<float> glass (1, n);
+            const std::pair<double, double> partials[] = { { 3023.0, 1.0 }, { 2968.0, 0.5 }, { 3059.0, 0.4 }, { 2136.0, 0.55 } };
+            for (int i = 0; i < n; ++i)
+            {
+                const double t = i / sr;
+                double v = 0.0;
+                for (auto [hz, amp] : partials) v += amp * std::sin (2.0 * juce::MathConstants<double>::pi * hz * t + hz);
+                glass.setSample (0, i, static_cast<float> (0.2 * v * std::exp (-t * 3.0)));
+            }
+            const auto pitch = PitchDetector::analyse (glass, sr);
+            expect (pitch.valid);
+            expectWithinAbsoluteError (pitch.midiNote, midiOf (3023.0), 0.05, "detected " + juce::String (pitch.frequencyHz, 1) + " Hz");
+        }
+
+        beginTest ("Harmonic tone with a weak fundamental (low piano note) keeps its fundamental");
+        {
+            // A1 = 55 Hz: fundamental -26 dB, energy mostly in harmonics 2..6.
+            const double sr = 44100.0, f0 = 55.0;
+            const int n = static_cast<int> (1.5 * sr);
+            juce::AudioBuffer<float> piano (1, n);
+            const double amps[] = { 0.05, 0.6, 1.0, 0.8, 0.5, 0.3 };
+            for (int i = 0; i < n; ++i)
+            {
+                const double t = i / sr;
+                double v = 0.0;
+                for (int k = 1; k <= 6; ++k) v += amps[k - 1] * std::sin (2.0 * juce::MathConstants<double>::pi * k * f0 * t + k);
+                piano.setSample (0, i, static_cast<float> (0.15 * v * std::exp (-t * 1.5)));
+            }
+            const auto pitch = PitchDetector::analyse (piano, sr);
+            expect (pitch.valid);
+            expectWithinAbsoluteError (pitch.midiNote, midiOf (f0), 0.05, "detected " + juce::String (pitch.frequencyHz, 1) + " Hz");
+        }
+
+        beginTest ("Note names follow the piano standard (C4 = MIDI 60 = 261.63 Hz, A4 = 440 Hz)");
+        {
+            expectEquals (lhss::midiNoteName (60), juce::String ("C4"));
+            expectEquals (lhss::midiNoteName (69), juce::String ("A4"));
+            expectEquals (lhss::midiNoteName (21), juce::String ("A0"));
+            expectEquals (lhss::midiNoteName (108), juce::String ("C8"));
+            const auto c4 = PitchDetector::analyse (makeSine (261.63, 1.0, 48000.0), 48000.0);
+            expectEquals (lhss::midiNoteName (c4.nearestNote()), juce::String ("C4"));
+        }
+
+        beginTest ("Noise, silence and very short clicks report no pitch");
+        {
+            juce::AudioBuffer<float> noise (2, 48000);
+            juce::Random rng (99);
+            for (int c = 0; c < 2; ++c)
+                for (int i = 0; i < noise.getNumSamples(); ++i) noise.setSample (c, i, rng.nextFloat() - 0.5f);
+            expect (! PitchDetector::analyse (noise, 48000.0).valid, "white noise");
+
+            juce::AudioBuffer<float> silence (1, 48000);
+            silence.clear();
+            expect (! PitchDetector::analyse (silence, 48000.0).valid, "silence");
+
+            juce::AudioBuffer<float> click (1, 300);
+            click.clear();
+            click.setSample (0, 10, 1.0f);
+            expect (! PitchDetector::analyse (click, 48000.0).valid, "click");
+        }
+
+        beginTest ("Loaded samples carry their analysed pitch");
+        {
+            const auto s = makeSineSample (196.0, 0.8, 44100.0, 2); // G3
+            expect (s->getPitch().valid);
+            expectEquals (s->getPitch().nearestNote(), 55);
+        }
+
+        beginTest ("Root Tune compensates the sample's detune: the root key plays at the exact pitch");
+        for (auto mode : { PlaybackMode::Natural, PlaybackMode::Pitch })
+        {
+            // 450 Hz sample = A4 + 38.9 ct. Tuned to its detected pitch, key A4 must sound 440 Hz.
+            auto fp = std::make_unique<EngineFixture> (48000.0, makeSineSample (450.0, 1.5, 48000.0)); auto& f = *fp;
+            const auto& pitch = f.store.latest()->getPitch();
+            f.params.playbackMode = mode;
+            f.params.rootNote = pitch.nearestNote();
+            f.params.rootTuneCents = pitch.centsOffset();
+            f.apply();
+            std::vector<float> out;
+            measureLifetime (f.engine, 69, &out);
+            juce::AudioBuffer<float> rendered (1, (int) out.size());
+            for (size_t i = 0; i < out.size(); ++i) rendered.setSample (0, (int) i, out[i]);
+            const auto result = PitchDetector::analyse (rendered, 48000.0);
+            expect (result.valid);
+            expectWithinAbsoluteError (result.frequencyHz, 440.0, 1.5, mode == PlaybackMode::Natural ? "Natural" : "Pitch");
+        }
+    }
+};
+
+static PitchDetectionTests pitchDetectionTests;
 static PitchMathTests pitchMathTests;
 static GranularPitchTests granularPitchTests;
 static RegionTests regionTests;

@@ -72,6 +72,10 @@ inline constexpr const char* delayPingPong   = "delayPingPong";
 inline constexpr const char* reverbSize      = "reverbSize";
 inline constexpr const char* reverbDamping   = "reverbDamping";
 inline constexpr const char* reverbMix       = "reverbMix";
+// Pitch analysis: how many cents the sample sounds away from its Root Note (set on load).
+inline constexpr const char* rootTune        = "rootTune";
+// LFO master switch: off = no LFO modulation at all, whatever the amounts are.
+inline constexpr const char* lfoOn           = "lfoOn";
 
 inline constexpr int parameterVersion = 1;
 } // namespace lhss::ids

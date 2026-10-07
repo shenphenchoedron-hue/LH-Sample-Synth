@@ -12,6 +12,8 @@ SampleData::SampleData (juce::AudioBuffer<float>&& a, double sr, juce::String di
     overviewMax.assign (kOverviewBins, 0.0f);
     if (frames <= 0 || chans <= 0) return;
 
+    pitch = PitchDetector::analyse (audio, sampleRate);
+
     for (int bin = 0; bin < kOverviewBins; ++bin)
     {
         const int b0 = static_cast<int> (static_cast<juce::int64> (bin) * frames / kOverviewBins);

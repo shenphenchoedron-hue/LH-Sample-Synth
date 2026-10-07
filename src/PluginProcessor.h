@@ -12,7 +12,8 @@
     It only translates host concepts (APVTS parameters, state, buses) into calls on the
     format-independent lhss::InstrumentEngine. */
 class LHSampleSynthProcessor final : public juce::AudioProcessor,
-                                     private juce::Timer
+                                     private juce::Timer,
+                                     private juce::AsyncUpdater
 {
 public:
     enum class SampleState { None, Loading, Loaded, Missing, Error };
@@ -53,13 +54,21 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     // Sample management (message / loader threads only — never the audio thread)
-    void loadSampleAsync (const juce::File& file);
-    bool loadSampleSync (const juce::File& file);   // blocking variant (tests, offline tools)
+    /** Loads a file. With `tuneToDetectedPitch` (every user load) Root Note and Root Tune are set
+        from the analysed pitch so the keys play in tune; restoring a saved project passes false
+        and keeps the stored tuning. */
+    void loadSampleAsync (const juce::File& file, bool tuneToDetectedPitch = true);
+    bool loadSampleSync (const juce::File& file, bool tuneToDetectedPitch = true);   // blocking variant (tests, offline tools)
     bool waitForPendingLoads (int timeoutMs);
     std::shared_ptr<const lhss::SampleData> getLoadedSample() const { return sampleStore.latest(); }
     SampleStatus getSampleStatus() const;
 
-    /** Sets every parameter back to its default (with host gestures). The loaded sample is kept. */
+    /** Sets Root Note and Root Tune from the loaded sample's detected pitch (message thread).
+        Samples without a clear pitch get Root Note C4 (MIDI 60) and 0 ct. Returns true if a pitch was found. */
+    bool tuneToDetectedPitch();
+
+    /** Sets every parameter back to its default (with host gestures), then re-applies the loaded
+        sample's detected tuning. The loaded sample is kept. */
     void resetParametersToDefaults();
 
     juce::AudioProcessorValueTreeState& getAPVTS() noexcept { return apvts; }
@@ -67,11 +76,18 @@ public:
     lhss::EngineParams readParameters() const noexcept;
     int getActiveVoiceCount() const noexcept { return activeVoices.load (std::memory_order_relaxed); }
 
+    /** Notes played on the on-screen keyboard (Standalone) are merged into the MIDI stream in
+        processBlock; incoming MIDI is reflected back so the keys light up. */
+    juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+
     static constexpr const char* kSamplePathProperty = "samplePath";
 
 private:
     void timerCallback() override;
-    void runLoad (const juce::File& file, int requestId);
+    void handleAsyncUpdate() override;
+    void runLoad (const juce::File& file, int requestId, bool tune);
+    void applyPitch (const lhss::PitchInfo& pitch);
+    void setParameterWithGesture (const char* id, float value);
     void setStatus (SampleState s, const juce::String& path, const juce::String& message = {});
 
     juce::AudioProcessorValueTreeState apvts;
@@ -106,11 +122,14 @@ private:
         std::atomic<float>* delayTime; std::atomic<float>* delaySync; std::atomic<float>* delayDivision;
         std::atomic<float>* delayFeedback; std::atomic<float>* delayMix; std::atomic<float>* delayPingPong;
         std::atomic<float>* reverbSize; std::atomic<float>* reverbDamping; std::atomic<float>* reverbMix;
+        std::atomic<float>* rootTune; std::atomic<float>* lfoOn;
     } raw {};
 
     mutable std::mutex statusMutex;
     SampleStatus status;
     juce::ChangeBroadcaster sampleBroadcaster;
+    juce::MidiKeyboardState keyboardState;
+    std::atomic<bool> pendingTune { false };   // loader thread -> message thread (handleAsyncUpdate)
     std::atomic<int> latestRequest { 0 };
     std::atomic<int> activeVoices { 0 };
 

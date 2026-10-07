@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../dsp/SampleReader.h"
+#include "PitchDetector.h"
 
 namespace lhss
 {
@@ -37,6 +38,9 @@ public:
     const std::vector<float>& getOverviewMin() const noexcept { return overviewMin; }
     const std::vector<float>& getOverviewMax() const noexcept { return overviewMax; }
 
+    /** Fundamental pitch of the recording, analysed once at load time (see PitchDetector). */
+    const PitchInfo& getPitch() const noexcept { return pitch; }
+
     /** Number of voices currently playing this sample (modified only by the audio thread). */
     mutable std::atomic<int> voiceRefs { 0 };
 
@@ -45,5 +49,6 @@ private:
     double sampleRate;
     juce::String name, path;
     std::vector<float> overviewMin, overviewMax;
+    PitchInfo pitch;
 };
 } // namespace lhss

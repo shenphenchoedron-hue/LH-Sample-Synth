@@ -18,6 +18,11 @@ struct Panel
 
 constexpr int kRow1 = 112, kRow2 = 478, kPanelHeight = 352;
 
+// Standalone keyboard panel (below the second row; the canvas grows by kKeyboardHeight).
+constexpr int kKeyboardPanelX = 38, kKeyboardPanelY = 846, kKeyboardPanelW = 2324, kKeyboardPanelH = 200;
+constexpr int kKeysX = kKeyboardPanelX + 12, kKeysY = kKeyboardPanelY + 42;
+constexpr int kKeysW = kKeyboardPanelW - 24, kKeysH = kKeyboardPanelH - 54;
+
 const Panel panels[] = {
     { 38,   kRow1, 520, col::green,    "Sample" },
     { 570,  kRow1, 292, col::orange,   "Loop" },
@@ -45,15 +50,34 @@ void placeKnob (juce::Component& k, int cx, int titleBaseline, int width = 92, i
 {
     k.setBounds (cx - width / 2, titleBaseline - 15, width, height);
 }
+
+void drawPanel (juce::Graphics& g, const Panel& p, int height)
+{
+    const auto r = juce::Rectangle<float> ((float) p.x, (float) p.y, (float) p.w, (float) height);
+    g.setColour (juce::Colours::white.withAlpha (0.76f));
+    g.fillRoundedRectangle (r, 15.0f);
+    {
+        juce::Graphics::ScopedSaveState s (g);
+        g.reduceClipRegion (r.withHeight (39.0f).toNearestInt());
+        g.setColour (p.colour.withAlpha (0.08f));
+        g.fillRoundedRectangle (r, 15.0f);
+    }
+    g.setColour (p.colour.withAlpha (0.42f));
+    g.drawRoundedRectangle (r, 15.0f, 1.0f);
+    g.setColour (p.colour);
+    g.fillRoundedRectangle ((float) p.x + 12.0f, (float) p.y + 10.0f, 6.0f, 19.0f, 3.0f);
+    g.setFont (uiFont (19.0f));
+    g.setColour (col::section);
+    g.drawText (p.title, p.x + 28, p.y + 9, p.w - 40, 22, juce::Justification::left, false);
+}
 } // namespace
 
 //==============================================================================
 void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
 {
-    const auto full = juce::Rectangle<float> (0, 0, (float) kDesignWidth, (float) kDesignHeight);
     g.fillAll (juce::Colours::white);
 
-    const auto frame = juce::Rectangle<float> (18, 20, 2364, 870);
+    const auto frame = juce::Rectangle<float> (18, 20, 2364, (float) designHeight - 40.0f);
     juce::Path framePath;
     framePath.addRoundedRectangle (frame, 24.0f);
     juce::DropShadow (juce::Colour (0xff58708a).withAlpha (0.18f), 28, { 0, 8 }).drawForPath (g, framePath);
@@ -62,7 +86,6 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     g.fillPath (framePath);
     g.setColour (juce::Colour (0xffd4e1ec));
     g.strokePath (framePath, juce::PathStrokeType (2.0f));
-    juce::ignoreUnused (full);
 
     // Logo + title
     if (logo.isValid())
@@ -91,25 +114,28 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     drawLabel (g, "Reverse", 1260, 42);
     drawLabel (g, "Freeze", 1340, 42);
 
+    // Detected pitch of the loaded sample
+    drawLabel (g, "Detected Pitch", 1430, 41, 200);
+    g.setFont (uiFont (16.0f));
+    g.setColour (col::label);
+    g.drawText (pitchName, 1430, 52, 210, 20, juce::Justification::left, true);
+    g.setFont (uiFont (14.0f, false));
+    g.setColour (col::tiny);
+    g.drawText (pitchInfo, 1430, 72, 210, 18, juce::Justification::left, true);
+
     // Section panels
     for (const auto& p : panels)
+        drawPanel (g, p, kPanelHeight);
+
+    if (showKeyboard)
     {
-        const auto r = juce::Rectangle<float> ((float) p.x, (float) p.y, (float) p.w, (float) kPanelHeight);
-        g.setColour (juce::Colours::white.withAlpha (0.76f));
-        g.fillRoundedRectangle (r, 15.0f);
-        {
-            juce::Graphics::ScopedSaveState s (g);
-            g.reduceClipRegion (r.withHeight (39.0f).toNearestInt());
-            g.setColour (p.colour.withAlpha (0.08f));
-            g.fillRoundedRectangle (r, 15.0f);
-        }
-        g.setColour (p.colour.withAlpha (0.42f));
-        g.drawRoundedRectangle (r, 15.0f, 1.0f);
-        g.setColour (p.colour);
-        g.fillRoundedRectangle ((float) p.x + 12.0f, (float) p.y + 10.0f, 6.0f, 19.0f, 3.0f);
-        g.setFont (uiFont (19.0f));
-        g.setColour (col::section);
-        g.drawText (p.title, p.x + 28, p.y + 9, p.w - 40, 22, juce::Justification::left, false);
+        drawPanel (g, { kKeyboardPanelX, kKeyboardPanelY, kKeyboardPanelW, col::blue, "Keyboard" }, kKeyboardPanelH);
+        g.setFont (uiFont (14.0f, false));
+        g.setColour (col::tiny);
+        g.drawText ("88 keys  (" + lhss::midiNoteName (kKeyboardLowestNote) + " - " + lhss::midiNoteName (kKeyboardHighestNote)
+                        + ")  |  click the keyboard once to also play it from the computer keys (A W S E D F T G Y H U J K ... from "
+                        + lhss::midiNoteName (60) + ")",
+                    kKeyboardPanelX + 140, kKeyboardPanelY + 11, kKeyboardPanelW - 160, 19, juce::Justification::left, true);
     }
 
     drawLabel (g, "Loop On", 594, 166);
@@ -118,6 +144,7 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     // Second row labels
     drawLabel (g, "Shape", 58, 538);
     drawLabel (g, "Sync", 236, 538);
+    drawLabel (g, "On", 470, 538);
     drawLabel (g, "Division", 316, 538);
     drawLabel (g, "Voice Mode", 1062, 538);
 
@@ -139,7 +166,7 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
 
     g.setFont (uiFont (14.0f, false));
     g.setColour (col::tiny);
-    g.drawText (footer, 48, 858, 1500, 18, juce::Justification::left, false);
+    g.drawText (footer, 48, designHeight - 52, 1500, 18, juce::Justification::left, false);
 }
 
 //==============================================================================
@@ -225,6 +252,11 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
     };
     canvas.addAndMakeVisible (resetButton);
 
+    tuneButton.setTooltip ("Set Root Note and Root Tune from the sample's detected pitch, so every key plays in tune "
+                           "(done automatically when a sample is loaded)");
+    tuneButton.onClick = [this] { processor.tuneToDetectedPitch(); refreshSampleInfo(); };
+    canvas.addAndMakeVisible (tuneButton);
+
     for (int n = 0; n < 128; ++n) rootNoteBox.addItem (lhss::midiNoteName (n), n + 1);
     rootNoteBox.onChange = [this] { rootNoteAttachment.setValueAsCompleteGesture ((float) (rootNoteBox.getSelectedId() - 1)); };
     rootNoteAttachment.sendInitialUpdate();
@@ -274,40 +306,79 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
     setupCombo (lfoShapeBox, { "Sine", "Triangle", "Square", "Saw", "Random" }, ids::lfoShape, lfoShapeAttach);
     setupCombo (lfoDivisionBox, divisions, ids::lfoDivision, lfoDivisionAttach);
     setupCombo (delayDivisionBox, divisions, ids::delayDivision, delayDivisionAttach);
+    setupSwitch (lfoOnSwitch, col::blue, ids::lfoOn, lfoOnAttach);
+    lfoOnSwitch.setTooltip ("LFO on / off. Off: the LFO does not modulate pitch, cutoff, amp, pan or grain position");
     setupSwitch (lfoSyncSwitch, col::blue, ids::lfoSync, lfoSyncAttach);
     setupSwitch (delaySyncSwitch, col::purple, ids::delaySync, delaySyncAttach);
     setupSwitch (pingPongSwitch, col::purple, ids::delayPingPong, pingPongAttach);
+
+    // 88-key on-screen keyboard (A0..C8), only in the Standalone app — in a DAW the host provides MIDI.
+    if (processor.wrapperType == juce::AudioProcessor::wrapperType_Standalone)
+    {
+        keyboard = std::make_unique<juce::MidiKeyboardComponent> (processor.getKeyboardState(),
+                                                                  juce::MidiKeyboardComponent::horizontalKeyboard);
+        keyboard->setAvailableRange (kKeyboardLowestNote, kKeyboardHighestNote);
+        keyboard->setScrollButtonsVisible (false);
+        keyboard->setVelocity (100.0f / 127.0f, false);
+        keyboard->setKeyPressBaseOctave (5); // computer keys start at MIDI 60
+        keyboard->setOctaveForMiddleC (4);   // piano naming, same as the Root Note box (C4 = 60)
+        keyboard->setColour (juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colours::white);
+        keyboard->setColour (juce::MidiKeyboardComponent::blackNoteColourId, col::title);
+        keyboard->setColour (juce::MidiKeyboardComponent::keySeparatorLineColourId, col::knobLine);
+        keyboard->setColour (juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, col::blue.withAlpha (0.16f));
+        keyboard->setColour (juce::MidiKeyboardComponent::keyDownOverlayColourId, col::blue.withAlpha (0.6f));
+        keyboard->setColour (juce::MidiKeyboardComponent::textLabelColourId, col::tiny);
+        keyboard->setColour (juce::MidiKeyboardComponent::shadowColourId, juce::Colour (0x2213263d));
+        canvas.addAndMakeVisible (*keyboard);
+    }
+    canvas.designHeight = getDesignHeight();
+    canvas.showKeyboard = hasKeyboard();
 
     layoutCanvas();
     processor.getSampleBroadcaster().addChangeListener (this);
     refreshSampleInfo();
 
+    const int designHeight = getDesignHeight();
     setResizable (true, true);
-    setResizeLimits (kDesignWidth / 2, kDesignHeight / 2, kDesignWidth * 3 / 2, kDesignHeight * 3 / 2);
-    if (auto* c = getConstrainer()) c->setFixedAspectRatio ((double) kDesignWidth / kDesignHeight);
+    setResizeLimits (kDesignWidth / 2, designHeight / 2, kDesignWidth * 3 / 2, designHeight * 3 / 2);
+    if (auto* c = getConstrainer()) c->setFixedAspectRatio ((double) kDesignWidth / designHeight);
     // Open as large as the screen comfortably allows (text scales with the window).
     double scale = 0.8;
     if (const auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
     {
         const auto area = display->userBounds;
-        scale = juce::jlimit (0.5, 1.0, juce::jmin (area.getWidth() * 0.95 / kDesignWidth, area.getHeight() * 0.88 / kDesignHeight));
+        scale = juce::jlimit (0.5, 1.0, juce::jmin (area.getWidth() * 0.95 / kDesignWidth, area.getHeight() * 0.88 / designHeight));
     }
-    setSize (juce::roundToInt (kDesignWidth * scale), juce::roundToInt (kDesignHeight * scale));
+    setSize (juce::roundToInt (kDesignWidth * scale), juce::roundToInt (designHeight * scale));
     startTimerHz (30);
 }
 
 LHSampleSynthEditor::~LHSampleSynthEditor()
 {
     processor.getSampleBroadcaster().removeChangeListener (this);
+    if (keyboard != nullptr)
+    {
+        keyboard.reset();
+        processor.getKeyboardState().allNotesOff (0); // no stuck notes if the window closes mid-press
+    }
     setLookAndFeel (nullptr);
 }
 
 void LHSampleSynthEditor::layoutCanvas()
 {
-    canvas.setBounds (0, 0, kDesignWidth, kDesignHeight);
+    canvas.setBounds (0, 0, kDesignWidth, getDesignHeight());
+
+    if (keyboard != nullptr)
+    {
+        keyboard->setBounds (kKeysX, kKeysY, kKeysW, kKeysH);
+        const int whiteKeys = 52; // white keys between A0 and C8
+        keyboard->setKeyWidth ((float) kKeysW / (float) whiteKeys);
+        keyboard->setLowestVisibleKey (kKeyboardLowestNote);
+    }
 
     loadButton.setBounds (392, 39, 146, 38);
     resetButton.setBounds (2192, 44, 170, 38);
+    tuneButton.setBounds (1650, 49, 150, 38);
     rootNoteBox.setBounds (780, 49, 92, 38);
     playbackMode.setBounds (885, 49, 167, 38);
     triggerMode.setBounds (1065, 49, 175, 38);
@@ -345,6 +416,7 @@ void LHSampleSynthEditor::layoutCanvas()
     // ---- Second row ------------------------------------------------------------------------
     lfoShapeBox.setBounds (58, 546, 160, 32);
     lfoSyncSwitch.setBounds (236, 549, 54, 26);
+    lfoOnSwitch.setBounds (470, 549, 54, 26);
     lfoDivisionBox.setBounds (316, 546, 110, 32);
     const int lfoX[] = { 88, 180, 272, 364, 456, 548 };
     juce::Component* lfoKnobs[] = { &lfoRate, &lfoToPitch, &lfoToCutoff, &lfoToAmp, &lfoToPan, &lfoToGrainPos };
@@ -382,7 +454,7 @@ void LHSampleSynthEditor::paint (juce::Graphics& g) { g.fillAll (juce::Colours::
 
 void LHSampleSynthEditor::resized()
 {
-    const float scale = juce::jmin ((float) getWidth() / kDesignWidth, (float) getHeight() / kDesignHeight);
+    const float scale = juce::jmin ((float) getWidth() / kDesignWidth, (float) getHeight() / getDesignHeight());
     canvas.setTransform (juce::AffineTransform::scale (scale));
 }
 
@@ -462,6 +534,28 @@ void LHSampleSynthEditor::refreshSampleInfo()
         canvas.fileInfo = status.state == State::Missing ? "File not found" : "WAV / AIFF / FLAC / OGG";
     }
 
+    if (showSample)
+    {
+        const auto& pitch = sample->getPitch();
+        if (pitch.valid)
+        {
+            const auto cents = juce::roundToInt (pitch.centsOffset());
+            canvas.pitchName = lhss::midiNoteName (pitch.nearestNote()) + "  " + (cents > 0 ? "+" : "") + juce::String (cents) + " ct";
+            canvas.pitchInfo = juce::String (pitch.frequencyHz, 1) + " Hz  |  confidence " + juce::String (juce::roundToInt (pitch.confidence * 100.0f)) + " %";
+        }
+        else
+        {
+            canvas.pitchName = "No clear pitch";
+            canvas.pitchInfo = "Plays as recorded on " + lhss::midiNoteName (60);
+        }
+    }
+    else
+    {
+        canvas.pitchName = "-";
+        canvas.pitchInfo = {};
+    }
+    tuneButton.setEnabled (showSample);
+
     if (! juce::approximatelyEqual (duration, shownDuration))
     {
         shownDuration = duration;
@@ -481,8 +575,12 @@ void LHSampleSynthEditor::timerCallback()
 {
     // Rate knobs are inactive while their tempo sync is on (and vice versa).
     const bool lfoSynced = lfoSyncSwitch.getToggleState(), delaySynced = delaySyncSwitch.getToggleState();
-    lfoRate.setAlpha (lfoSynced ? 0.35f : 1.0f);
-    lfoDivisionBox.setAlpha (lfoSynced ? 1.0f : 0.45f);
+    // Everything in the LFO panel is dimmed while the LFO is switched off.
+    const float lfoAlpha = lfoOnSwitch.getToggleState() ? 1.0f : 0.4f;
+    lfoRate.setAlpha ((lfoSynced ? 0.35f : 1.0f) * lfoAlpha);
+    lfoDivisionBox.setAlpha ((lfoSynced ? 1.0f : 0.45f) * lfoAlpha);
+    for (auto* c : std::initializer_list<juce::Component*> { &lfoToPitch, &lfoToCutoff, &lfoToAmp, &lfoToPan, &lfoToGrainPos, &lfoShapeBox, &lfoSyncSwitch })
+        c->setAlpha (lfoAlpha);
     delayTime.setAlpha (delaySynced ? 0.35f : 1.0f);
     delayDivisionBox.setAlpha (delaySynced ? 1.0f : 0.45f);
 
@@ -493,6 +591,6 @@ void LHSampleSynthEditor::timerCallback()
         shownVoices = voices;
         canvas.footer = "LH Sample Synth v" LHSS_VERSION_STRING "  |  VST3 / AU / CLAP  |  Active voices: "
                         + juce::String (voices) + "  |  Open source (AGPLv3)";
-        canvas.repaint (0, 850, 1300, 40);
+        canvas.repaint (0, getDesignHeight() - 60, 1300, 40);
     }
 }

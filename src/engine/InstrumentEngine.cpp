@@ -63,6 +63,7 @@ void InstrumentEngine::setParameters (const EngineParams& p) noexcept
     params = p;
     params.polyphony = std::clamp (p.polyphony, 1, kMaxPolyphony);
     params.rootNote = std::clamp (p.rootNote, 0, 127);
+    params.rootTuneCents = std::clamp (p.rootTuneCents, -50.0f, 50.0f);
 
     gainSmoother.setTarget (juce::Decibels::decibelsToGain (std::clamp (p.outputGainDb, -48.0f, 12.0f), -48.0f));
     panSmoother.setTarget (std::clamp (p.pan, -1.0f, 1.0f));
@@ -70,6 +71,8 @@ void InstrumentEngine::setParameters (const EngineParams& p) noexcept
     formantSmoother.setTarget (std::clamp (p.formant, -1.0f, 1.0f));
     grainSizeSmoother.setTarget (std::clamp (p.grainSizeMs, 10.0f, 500.0f));
     params.unisonVoices = std::clamp (p.unisonVoices, 1, kMaxUnison);
+    if (! params.lfoOn) // LFO switched off: no modulation at all, whatever the amounts are
+        params.lfoToPitch = params.lfoToCutoff = params.lfoToAmp = params.lfoToPan = params.lfoToGrainPos = 0.0f;
 }
 
 void InstrumentEngine::adoptPendingSample() noexcept

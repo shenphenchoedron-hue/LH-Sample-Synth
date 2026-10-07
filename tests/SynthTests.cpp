@@ -218,6 +218,7 @@ public:
             auto r = std::make_unique<Rig>();
             r->params.playbackMode = PlaybackMode::Natural;
             r->params.loopOn = true;
+            r->params.lfoOn = true;
             r->params.lfoToAmp = 1.0f;
             r->params.lfoRateHz = 5.0f;
             r->params.drive = 1.0f;
@@ -230,6 +231,35 @@ public:
             bool ok = true;
             for (float v : out) ok = ok && std::isfinite (v) && std::abs (v) <= 1.0f;
             expect (ok);
+        }
+
+        beginTest ("LFO switched off: no modulation, whatever the amounts are");
+        {
+            auto renderWith = [] (bool lfoAmounts)
+            {
+                auto r = std::make_unique<Rig>();
+                r->params.playbackMode = PlaybackMode::Natural;
+                r->params.loopOn = true;
+                r->params.lfoOn = false;
+                r->params.lfoRateHz = 5.0f;
+                if (lfoAmounts)
+                {
+                    r->params.lfoToAmp = 1.0f;
+                    r->params.lfoToPitch = 12.0f;
+                    r->params.lfoToPan = 1.0f;
+                    r->params.lfoToCutoff = 1.0f;
+                    r->params.lfoToGrainPos = 1.0f;
+                }
+                r->apply();
+                noteOn (r->engine, 60);
+                return r->render (1.0);
+            };
+            const auto withAmounts = renderWith (true), without = renderWith (false);
+            double maxDiff = 0.0;
+            for (size_t i = 0; i < withAmounts.size() && i < without.size(); ++i)
+                maxDiff = juce::jmax (maxDiff, (double) std::abs (withAmounts[i] - without[i]));
+            expect (! withAmounts.empty() && withAmounts.size() == without.size());
+            expectLessOrEqual (maxDiff, 1.0e-6, "output identical to no LFO at all");
         }
 
         beginTest ("Delay repeats after the set time; chorus at 0 % is transparent");

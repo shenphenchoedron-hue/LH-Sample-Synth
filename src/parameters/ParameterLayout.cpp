@@ -110,7 +110,7 @@ std::unique_ptr<juce::AudioParameterFloat> makeFloat (const char* id, const char
 
 juce::String midiNoteName (int note)
 {
-    return juce::MidiMessage::getMidiNoteName (juce::jlimit (0, 127, note), true, true, 3);
+    return juce::MidiMessage::getMidiNoteName (juce::jlimit (0, 127, note), true, true, 4);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
@@ -225,6 +225,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (makeFloat (ids::reverbSize,    "Reverb Size",    Range (0.0f, 1.0f), 0.6f, percentText, parsePercent));
     layout.add (makeFloat (ids::reverbDamping, "Reverb Damping", Range (0.0f, 1.0f), 0.5f, percentText, parsePercent));
     layout.add (makeFloat (ids::reverbMix,     "Reverb Mix",     Range (0.0f, 1.0f), 0.0f, percentText, parsePercent));
+
+    // ---- Pitch analysis (added last so existing parameter indices stay stable) --------------
+    // Detected deviation of the recording from its Root Note (e.g. +32 ct = the sample is 32 cents
+    // sharp). Set automatically together with Root Note when a sample is loaded; compensated during
+    // playback so every key sounds at its equal-tempered pitch (A = 440 Hz).
+    layout.add (makeFloat (ids::rootTune, "Root Tune", Range (-50.0f, 50.0f), 0.0f, centText));
+
+    // LFO master switch (off by default, so the LFO can never detune or colour a sound by accident).
+    layout.add (std::make_unique<juce::AudioParameterBool> (pid (ids::lfoOn), "LFO On", false));
 
     return layout;
 }

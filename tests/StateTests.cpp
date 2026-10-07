@@ -8,10 +8,10 @@ using namespace lhss;
 
 namespace
 {
-juce::File writeTestWav (const juce::File& file, double sr, int channels, double seconds)
+juce::File writeTestWav (const juce::File& file, double sr, int channels, double seconds, double freq = 440.0)
 {
     file.deleteFile();
-    auto buffer = test::makeSine (440.0, seconds, sr, channels);
+    auto buffer = test::makeSine (freq, seconds, sr, channels);
     juce::WavAudioFormat wav;
     std::unique_ptr<juce::OutputStream> stream (file.createOutputStream().release());
     auto writer = wav.createWriterFor (stream, juce::AudioFormatWriterOptions{}
@@ -32,6 +32,34 @@ void setParam (LHSampleSynthProcessor& p, const char* id, float value)
 float getParam (LHSampleSynthProcessor& p, const char* id)
 {
     return p.getAPVTS().getRawParameterValue (id)->load();
+}
+
+/** Plays one held note through the full processor and returns the output frequency, measured
+    independently of PitchDetector from interpolated rising zero crossings (0.1 s .. 1.0 s). */
+double playedFrequency (LHSampleSynthProcessor& p, int note, double hostRate)
+{
+    p.setPlayConfigDetails (0, 2, hostRate, 512);
+    p.prepareToPlay (hostRate, 512);
+    std::vector<float> out;
+    juce::AudioBuffer<float> buf (2, 512);
+    for (int b = 0; b < static_cast<int> (hostRate * 1.1 / 512); ++b)
+    {
+        juce::MidiBuffer midi;
+        if (b == 0) midi.addEvent (juce::MidiMessage::noteOn (1, note, (juce::uint8) 100), 0);
+        buf.clear();
+        p.processBlock (buf, midi);
+        for (int i = 0; i < 512; ++i) out.push_back (buf.getSample (0, i));
+    }
+    double first = -1.0, last = -1.0;
+    int periods = 0;
+    for (size_t i = static_cast<size_t> (hostRate * 0.1); i < static_cast<size_t> (hostRate * 1.0) && i < out.size(); ++i)
+        if (out[i - 1] < 0.0f && out[i] >= 0.0f)
+        {
+            const double t = static_cast<double> (i - 1) + out[i - 1] / (out[i - 1] - out[i]);
+            if (first < 0.0) first = t; else ++periods;
+            last = t;
+        }
+    return periods > 0 ? periods * hostRate / (last - first) : 0.0;
 }
 } // namespace
 
@@ -58,9 +86,9 @@ public:
             expectEquals (getParam (p, ids::cutoff), 20000.0f);
             setParam (p, ids::outputGain, -500.0f);
             expectEquals (getParam (p, ids::outputGain), -48.0f);
-            expectEquals (p.getAPVTS().getParameter (ids::rootNote)->getCurrentValueAsText(), juce::String ("C-2"));
+            expectEquals (p.getAPVTS().getParameter (ids::rootNote)->getCurrentValueAsText(), juce::String ("C-1"));
             setParam (p, ids::rootNote, 60.0f);
-            expectEquals (p.getAPVTS().getParameter (ids::rootNote)->getCurrentValueAsText(), juce::String ("C3"));
+            expectEquals (p.getAPVTS().getParameter (ids::rootNote)->getCurrentValueAsText(), juce::String ("C4"));
         }
 
         beginTest ("State serialization");
@@ -213,10 +241,138 @@ public:
             p.resetParametersToDefaults();
             int wrong = 0;
             for (auto* param : p.getParameters())
+            {
+                const auto id = dynamic_cast<juce::AudioProcessorParameterWithID*> (param)->paramID;
+                if (id == ids::rootNote || id == ids::rootTune) continue; // re-tuned to the sample, see below
                 if (std::abs (param->getValue() - param->getDefaultValue()) > 1.0e-6f) ++wrong;
+            }
             expectEquals (wrong, 0);
+            expectEquals (getParam (p, ids::rootNote), 69.0f, "the kept 440 Hz sample stays tuned to A4");
+            expectWithinAbsoluteError (getParam (p, ids::rootTune), 0.0f, 2.0f);
             expect (p.getLoadedSample() != nullptr);
             expect (p.getSampleStatus().state == LHSampleSynthProcessor::SampleState::Loaded);
+        }
+
+        beginTest ("Loading a sample tunes Root Note and Root Tune to its detected pitch");
+        {
+            // 450 Hz = A4 (MIDI 69) + 38.9 cents; 196 Hz = G3 (MIDI 55) - 0.6 cents.
+            for (auto [freq, note, cents] : { std::tuple { 450.0, 69.0f, 38.9f }, std::tuple { 196.0, 55.0f, 0.0f } })
+            {
+                const auto wav = writeTestWav (dir.getChildFile ("tone.wav"), 44100.0, 1, 1.0, freq);
+                LHSampleSynthProcessor p;
+                setParam (p, ids::rootNote, 40.0f);
+                expect (p.loadSampleSync (wav));
+                expectEquals (getParam (p, ids::rootNote), note, juce::String (freq) + " Hz");
+                expectWithinAbsoluteError (getParam (p, ids::rootTune), cents, 2.0f, juce::String (freq) + " Hz");
+            }
+        }
+
+        beginTest ("Control: a clean 440 Hz sample plays 440 Hz on its root key and 261.63 Hz on C4");
+        {
+            // Neutral settings (defaults: no LFO, tune, random pitch, unison or glide), the file at
+            // 44.1 kHz played at 48 and 44.1 kHz host rates, in both playback modes.
+            const auto wav = writeTestWav (dir.getChildFile ("a440.wav"), 44100.0, 1, 2.0, 440.0);
+            for (double hostRate : { 48000.0, 44100.0 })
+                for (float mode : { 0.0f, 1.0f })
+                {
+                    LHSampleSynthProcessor p;
+                    expect (p.loadSampleSync (wav));
+                    setParam (p, ids::playbackMode, mode);
+                    expectEquals (getParam (p, ids::rootNote), 69.0f, "detected root A4");
+                    expectWithinAbsoluteError (getParam (p, ids::rootTune), 0.0f, 0.5f, "no cent offset for a clean 440 Hz");
+                    const auto label = juce::String (mode > 0.5f ? "Pitch" : "Natural") + " @ " + juce::String (hostRate);
+                    expectWithinAbsoluteError (playedFrequency (p, 69, hostRate), 440.0, 0.3, "A4 " + label);
+                    expectWithinAbsoluteError (playedFrequency (p, 60, hostRate), 261.63, 0.3, "C4 " + label);
+                }
+        }
+
+        beginTest ("A slow LFO > Pitch (as found in the app settings) detunes a clean sample");
+        {
+            const auto wav = dir.getChildFile ("a440.wav");
+            LHSampleSynthProcessor p;
+            expect (p.loadSampleSync (wav));
+            setParam (p, ids::playbackMode, 0.0f);
+            setParam (p, ids::lfoToPitch, 0.43f);   // the value found in the user's app settings
+            expectWithinAbsoluteError (playedFrequency (p, 60, 48000.0), 261.63, 0.3, "LFO switch off (default): no detune");
+            setParam (p, ids::lfoOn, 1.0f);
+            setParam (p, ids::lfoRate, 0.14f);
+            const double hz = playedFrequency (p, 60, 48000.0);
+            expect (hz > 262.0, "slow LFO > Pitch raises C4 to " + juce::String (hz, 2) + " Hz during the first second");
+        }
+
+        beginTest ("Asynchronous loads tune on the message thread; restoring a project keeps its tuning");
+        {
+            const auto wav = writeTestWav (dir.getChildFile ("tone_async.wav"), 48000.0, 1, 1.0, 330.0); // E4 = 64, -2 ct
+            juce::MemoryBlock block;
+            {
+                LHSampleSynthProcessor p;
+                p.loadSampleAsync (wav);
+                expect (p.waitForPendingLoads (10000));
+                // The re-tune is posted to the message thread (this test runs on it): deliver it.
+                for (int i = 0; i < 100 && ! juce::approximatelyEqual (getParam (p, ids::rootNote), 64.0f); ++i)
+                {
+                    juce::MessageManager::getInstance()->runDispatchLoopUntil (10);
+                }
+                expectEquals (getParam (p, ids::rootNote), 64.0f);
+                setParam (p, ids::rootNote, 52.0f);   // the user overrides it
+                setParam (p, ids::rootTune, 10.0f);
+                p.getStateInformation (block);
+            }
+            LHSampleSynthProcessor q;
+            q.setStateInformation (block.getData(), (int) block.getSize());
+            expect (q.waitForPendingLoads (10000));
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+            expectEquals (getParam (q, ids::rootNote), 52.0f);
+            expectWithinAbsoluteError (getParam (q, ids::rootTune), 10.0f, 0.01f);
+            expect (q.tuneToDetectedPitch(), "Tune to Pitch re-applies the analysis on request");
+            expectEquals (getParam (q, ids::rootNote), 64.0f);
+        }
+
+        beginTest ("A sample without a clear pitch plays as recorded on C4 (MIDI 60)");
+        {
+            const auto noise = dir.getChildFile ("noise.wav");
+            noise.deleteFile();
+            {
+                juce::AudioBuffer<float> buffer (1, 44100);
+                juce::Random rng (42);
+                for (int i = 0; i < buffer.getNumSamples(); ++i) buffer.setSample (0, i, rng.nextFloat() * 0.8f - 0.4f);
+                juce::WavAudioFormat wavFormat;
+                std::unique_ptr<juce::OutputStream> stream (noise.createOutputStream().release());
+                auto writer = wavFormat.createWriterFor (stream, juce::AudioFormatWriterOptions{}.withSampleRate (44100.0)
+                                                                                                .withNumChannels (1)
+                                                                                                .withBitsPerSample (24));
+                if (writer != nullptr) writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples());
+            }
+            LHSampleSynthProcessor p;
+            setParam (p, ids::rootNote, 40.0f);
+            setParam (p, ids::rootTune, 20.0f);
+            expect (p.loadSampleSync (noise));
+            expectEquals (getParam (p, ids::rootNote), 60.0f);
+            expectWithinAbsoluteError (getParam (p, ids::rootTune), 0.0f, 0.01f);
+        }
+
+        beginTest ("LFO switch: new instances start with the LFO off; old projects that use the LFO keep it on");
+        {
+            LHSampleSynthProcessor fresh;
+            expectEquals (getParam (fresh, ids::lfoOn), 0.0f);
+            for (float amount : { 0.0f, 0.43f })
+            {
+                juce::MemoryBlock block;
+                {
+                    LHSampleSynthProcessor p;
+                    setParam (p, ids::lfoToPitch, amount);
+                    p.getStateInformation (block);
+                }
+                // Simulate a project saved before the switch existed.
+                auto xml = juce::AudioProcessor::getXmlFromBinary (block.getData(), (int) block.getSize());
+                for (auto* child = xml->getFirstChildElement(); child != nullptr; child = child->getNextElement())
+                    if (child->getStringAttribute ("id") == ids::lfoOn) { xml->removeChildElement (child, true); break; }
+                juce::MemoryBlock old;
+                juce::AudioProcessor::copyXmlToBinary (*xml, old);
+                LHSampleSynthProcessor q;
+                q.setStateInformation (old.getData(), (int) old.getSize());
+                expectEquals (getParam (q, ids::lfoOn), amount > 0.0f ? 1.0f : 0.0f, "LFO > Pitch " + juce::String (amount));
+            }
         }
 
         beginTest ("FLAC files load (16 and 24 bit, upper-case extension)");

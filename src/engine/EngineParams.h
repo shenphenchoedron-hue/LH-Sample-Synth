@@ -33,6 +33,7 @@ inline double syncDivisionSeconds (int index, double bpm) noexcept
 struct EngineParams
 {
     int rootNote = 60;
+    float rootTuneCents = 0.0f;                        // sample's detected offset from rootNote (+ = sharp)
     PlaybackMode playbackMode = PlaybackMode::Pitch;
     float sampleStart = 0.0f, sampleEnd = 1.0f;        // normalised to file length
     float attackMs = 5.0f, decayMs = 250.0f, sustain = 0.5f, releaseMs = 400.0f;
@@ -51,6 +52,7 @@ struct EngineParams
     int polyphony = kMaxPolyphony;
 
     // LFO (one global LFO, free running or tempo synced)
+    bool lfoOn = false;           // master switch: off = all LFO amounts ignored
     LfoShape lfoShape = LfoShape::Sine;
     float lfoRateHz = 4.0f;
     bool lfoSync = false;

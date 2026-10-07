@@ -168,7 +168,7 @@ void Voice::render (const VoiceContext& ctx, float* mixL, float* mixR, int n) no
 
     const int modeFade = static_cast<int> (kModeFadeSeconds * hostRate);
     const double baseIncrement = sourceIncrement (view.sampleRate, hostRate);
-    const double semis = currentNote - p.rootNote + p.coarseTune + (p.fineTune + detuneCents) / 100.0
+    const double semis = currentNote - p.rootNote + p.coarseTune + (p.fineTune + detuneCents - p.rootTuneCents) / 100.0
                          + ctx.pitchBendSemitones + ctx.lfo * p.lfoToPitch;
     const double ratio = std::pow (2.0, semis / 12.0);
     const double naturalIncrement = baseIncrement * ratio;

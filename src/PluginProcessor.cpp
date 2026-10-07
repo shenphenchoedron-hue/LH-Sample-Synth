@@ -30,7 +30,8 @@ LHSampleSynthProcessor::LHSampleSynthProcessor()
             p (ids::chorusRate), p (ids::chorusDepth), p (ids::chorusMix),
             p (ids::delayTime), p (ids::delaySync), p (ids::delayDivision), p (ids::delayFeedback),
             p (ids::delayMix), p (ids::delayPingPong),
-            p (ids::reverbSize), p (ids::reverbDamping), p (ids::reverbMix) };
+            p (ids::reverbSize), p (ids::reverbDamping), p (ids::reverbMix),
+            p (ids::rootTune), p (ids::lfoOn) };
 
     startTimer (500); // garbage-collect replaced samples on the message thread
 }
@@ -39,6 +40,7 @@ LHSampleSynthProcessor::~LHSampleSynthProcessor()
 {
     stopTimer();
     loaderPool.removeAllJobs (true, 10000);
+    cancelPendingUpdate();
 }
 
 //==============================================================================
@@ -64,6 +66,7 @@ lhss::EngineParams LHSampleSynthProcessor::readParameters() const noexcept
 
     lhss::EngineParams e;
     e.rootNote = i (raw.rootNote);
+    e.rootTuneCents = f (raw.rootTune);
     e.playbackMode = static_cast<lhss::PlaybackMode> (juce::jlimit (0, 1, i (raw.playbackMode)));
     e.sampleStart = f (raw.sampleStart);
     e.sampleEnd = f (raw.sampleEnd);
@@ -93,6 +96,7 @@ lhss::EngineParams LHSampleSynthProcessor::readParameters() const noexcept
     e.velocitySensitivity = f (raw.velocitySens);
     e.polyphony = i (raw.polyphony);
 
+    e.lfoOn = b (raw.lfoOn);
     e.lfoShape = static_cast<lhss::LfoShape> (juce::jlimit (0, 4, i (raw.lfoShape)));
     e.lfoRateHz = f (raw.lfoRate);
     e.lfoSync = b (raw.lfoSync);
@@ -138,6 +142,7 @@ void LHSampleSynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     if (auto* hostPlayHead = getPlayHead())
         if (const auto pos = hostPlayHead->getPosition())
             if (const auto bpm = pos->getBpm()) engine.setTempo (*bpm);
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
     engine.process (buffer, midi);
     activeVoices.store (engine.getActiveVoiceCount(), std::memory_order_relaxed);
 }
@@ -162,14 +167,24 @@ LHSampleSynthProcessor::SampleStatus LHSampleSynthProcessor::getSampleStatus() c
     return status;
 }
 
-void LHSampleSynthProcessor::runLoad (const juce::File& file, int requestId)
+void LHSampleSynthProcessor::runLoad (const juce::File& file, int requestId, bool tune)
 {
-    auto result = lhss::SampleLoader::loadFile (file);
+    auto result = lhss::SampleLoader::loadFile (file);   // also analyses the pitch
     if (requestId != latestRequest.load()) return; // a newer request superseded this one
 
     if (result.ok())
     {
         sampleStore.publish (result.sample, engine);
+        // Parameters are changed on the message thread (host gestures, GUI attachments).
+        if (! tune) pendingTune = false;
+        else if (juce::MessageManager::getInstanceWithoutCreating() != nullptr
+                 && juce::MessageManager::getInstance()->isThisTheMessageThread())
+            applyPitch (result.sample->getPitch());
+        else
+        {
+            pendingTune = true;
+            triggerAsyncUpdate();
+        }
         setStatus (SampleState::Loaded, file.getFullPathName());
     }
     else
@@ -178,18 +193,48 @@ void LHSampleSynthProcessor::runLoad (const juce::File& file, int requestId)
     }
 }
 
-void LHSampleSynthProcessor::loadSampleAsync (const juce::File& file)
+void LHSampleSynthProcessor::loadSampleAsync (const juce::File& file, bool tune)
 {
     const int id = ++latestRequest;
     setStatus (SampleState::Loading, file.getFullPathName());
-    loaderPool.addJob ([this, file, id] { runLoad (file, id); });
+    loaderPool.addJob ([this, file, id, tune] { runLoad (file, id, tune); });
 }
 
-bool LHSampleSynthProcessor::loadSampleSync (const juce::File& file)
+bool LHSampleSynthProcessor::loadSampleSync (const juce::File& file, bool tune)
 {
     const int id = ++latestRequest;
-    runLoad (file, id);
+    runLoad (file, id, tune);
     return getSampleStatus().state == SampleState::Loaded;
+}
+
+void LHSampleSynthProcessor::handleAsyncUpdate()
+{
+    if (pendingTune.exchange (false)) tuneToDetectedPitch();
+}
+
+bool LHSampleSynthProcessor::tuneToDetectedPitch()
+{
+    const auto sample = sampleStore.latest();
+    if (sample == nullptr) return false;
+    applyPitch (sample->getPitch());
+    return sample->getPitch().valid;
+}
+
+void LHSampleSynthProcessor::setParameterWithGesture (const char* id, float value)
+{
+    if (auto* param = apvts.getParameter (id))
+    {
+        param->beginChangeGesture();
+        param->setValueNotifyingHost (param->convertTo0to1 (value));
+        param->endChangeGesture();
+    }
+}
+
+void LHSampleSynthProcessor::applyPitch (const lhss::PitchInfo& pitch)
+{
+    // A sample with no clear pitch (noise, clicks) is played as recorded on C4 (MIDI 60).
+    setParameterWithGesture (ids::rootNote, pitch.valid ? (float) pitch.nearestNote() : 60.0f);
+    setParameterWithGesture (ids::rootTune, pitch.valid ? pitch.centsOffset() : 0.0f);
 }
 
 bool LHSampleSynthProcessor::waitForPendingLoads (int timeoutMs)
@@ -212,6 +257,8 @@ void LHSampleSynthProcessor::resetParametersToDefaults()
             ranged->setValueNotifyingHost (ranged->getDefaultValue());
             ranged->endChangeGesture();
         }
+    // The tuning belongs to the (kept) sample, so put it back.
+    if (sampleStore.latest() != nullptr) tuneToDetectedPitch();
 }
 
 void LHSampleSynthProcessor::timerCallback() { sampleStore.collectGarbage (engine); }
@@ -238,7 +285,21 @@ void LHSampleSynthProcessor::setStateInformation (const void* data, int sizeInBy
     const juce::String path = tree.getProperty (kSamplePathProperty).toString();
     tree.removeProperty (kSamplePathProperty, nullptr);
     tree.removeProperty ("pluginVersion", nullptr);
+
+    // Projects saved before the LFO switch existed: keep their LFO running if they use it.
+    if (! tree.getChildWithProperty ("id", ids::lfoOn).isValid())
+    {
+        bool usesLfo = false;
+        for (auto* id : { ids::lfoToPitch, ids::lfoToCutoff, ids::lfoToAmp, ids::lfoToPan, ids::lfoToGrainPos })
+            if (std::abs (static_cast<float> (tree.getChildWithProperty ("id", id).getProperty ("value", 0.0f))) > 1.0e-6f)
+                usesLfo = true;
+        juce::ValueTree lfoParam ("PARAM");
+        lfoParam.setProperty ("id", ids::lfoOn, nullptr);
+        lfoParam.setProperty ("value", usesLfo ? 1.0f : 0.0f, nullptr);
+        tree.appendChild (lfoParam, nullptr);
+    }
     apvts.replaceState (tree);
+    pendingTune = false; // a load still waiting to re-tune must not override the restored tuning
 
     // Ask hosts to re-read every parameter value (CLAP: params rescan; VST3/AU: refresh).
     updateHostDisplay (ChangeDetails().withParameterInfoChanged (true));
@@ -249,7 +310,8 @@ void LHSampleSynthProcessor::setStateInformation (const void* data, int sizeInBy
     if (file.existsAsFile())
     {
         const auto current = sampleStore.latest();
-        if (current == nullptr || current->getPath() != path) loadSampleAsync (file);
+        // Keep the project's saved Root Note / Root Tune (no re-tuning on restore).
+        if (current == nullptr || current->getPath() != path) loadSampleAsync (file, false);
         else setStatus (SampleState::Loaded, path);
     }
     else

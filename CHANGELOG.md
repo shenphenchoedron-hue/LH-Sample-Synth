@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.1.0] - 2026-10-07
+
+Automatic tuning to the piano standard, an 88-key keyboard in the standalone app and an LFO on/off
+switch.
+
+### Downloads
+| File | Contents |
+|---|---|
+| `LH-Sample-Synth-v1.1.0-Windows.zip` | VST3, CLAP, standalone `.exe` (64-bit) |
+| `LH-Sample-Synth-v1.1.0-macOS.zip` | VST3, CLAP, Audio Unit, standalone `.app` (Apple Silicon + Intel) |
+| `LH-Sample-Synth-v1.1.0-Linux.zip` | VST3, CLAP, standalone app |
+
+See `INSTALL.txt` inside each zip for where to copy the files. The macOS builds are ad-hoc signed
+but not notarised. If macOS blocks them, run `xattr -cr <file>` once.
+
+### Added
+- **All formats: automatic tuning.** The pitch of a loaded sample is analysed (YIN, 40 Hz - 4.2 kHz,
+  sharpened with a long FFT). Root Note and a new **Root Tune** parameter (-50 to +50 cents) are set
+  from it, so every key plays at its equal-tempered pitch (A4 = 440 Hz) and fits other music. A clean
+  440 Hz sample plays 440.0 Hz on A4 and 261.6 Hz on C4.
+  - The header shows the detected pitch and has a **Tune to Pitch** button.
+  - Sounds without a clear pitch (noise, clicks, melodies) play as recorded on C4 (MIDI 60).
+  - For inharmonic sounds (glass, bells, metal) the dominant partial is used, which is what a
+    tuner shows.
+  - Saved projects keep their stored Root Note and Root Tune when they are opened. Reset to Default
+    re-applies the detected tuning of the loaded sample.
+- **All formats: LFO On switch** in the LFO panel. Off (the default for new instances) means no LFO
+  modulation at all, whatever the LFO amounts are set to. Projects saved with 1.0.0 that use the LFO
+  open with it switched on.
+- **Standalone app: 88-key on-screen keyboard** (A0 - C8) below the controls. Play it with the mouse
+  or, after clicking it, with the computer keys. Notes from a connected MIDI keyboard light up the
+  keys. The plugin formats do not show the keyboard.
+
+### Changed
+- Note names now follow the piano standard (scientific pitch notation): middle C = **C4** = MIDI 60
+  = 261.63 Hz, A4 = 440 Hz. Before, MIDI 60 was called C3. Only the names change: saved projects and
+  MIDI note numbers sound exactly as before.
+
 ## [1.0.0] - 2026-10-07
 
 First release of **LH Sample Synth**, a recorded-sound instrument. Load a recording (a bucket, a

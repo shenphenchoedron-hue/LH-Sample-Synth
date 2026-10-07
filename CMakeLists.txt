@@ -8,7 +8,7 @@ if(APPLE)
     endif()
 endif()
 
-project(LHSampleSynth VERSION 1.0.0 LANGUAGES C CXX)
+project(LHSampleSynth VERSION 1.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -73,6 +73,7 @@ set(LHSS_CORE_SOURCES
     src/engine/Voice.cpp
     src/engine/VoiceManager.cpp
     src/engine/SampleData.cpp
+    src/engine/PitchDetector.cpp
     src/engine/SampleLoader.cpp
     src/engine/SampleStore.cpp
     src/engine/SampleRegion.cpp
@@ -136,7 +137,8 @@ if(LHSS_BUILD_TESTS)
         ${LHSS_CORE_SOURCES}
         ${LHSS_PLUGIN_SOURCES})
     target_include_directories(LHSampleSynthTests PRIVATE src)
-    target_compile_definitions(LHSampleSynthTests PRIVATE ${LHSS_DEFINITIONS} LHSS_TESTS=1)
+    # Modal loops: lets tests pump the message loop (runDispatchLoopUntil) to deliver async updates.
+    target_compile_definitions(LHSampleSynthTests PRIVATE ${LHSS_DEFINITIONS} LHSS_TESTS=1 JUCE_MODAL_LOOPS_PERMITTED=1)
     target_link_libraries(LHSampleSynthTests
         PRIVATE
             LHSampleSynthAssets
