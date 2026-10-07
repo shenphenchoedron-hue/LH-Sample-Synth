@@ -38,6 +38,10 @@ int main (int argc, char** argv)
     {
         const auto* r = runner.getResult (i);
         failures += r->failures;
+        if (r->failures > 0 && juce::SystemStats::getEnvironmentVariable ("GITHUB_ACTIONS", {}).isNotEmpty())
+            for (auto& m : r->messages)
+                std::printf ("::error title=%s / %s::%s\n", r->unitTestName.toRawUTF8(), r->subcategoryName.toRawUTF8(),
+                             m.replaceCharacters ("\r\n", "  ").toRawUTF8());
         passes += r->passes;
     }
     std::printf ("\n=== LH Sample Synth tests: %d checks passed, %d failed ===\n", passes, failures);
