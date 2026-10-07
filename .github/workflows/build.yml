@@ -43,18 +43,6 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel 4
 
-      - name: Windows test diagnostics
-        if: runner.os == 'Windows'
-        shell: pwsh
-        continue-on-error: true
-        run: |
-          $exe = Get-ChildItem -Recurse build -Filter LHSampleSynthTests.exe | Select-Object -First 1
-          Write-Output "::error title=exe::$($exe.FullName) size=$($exe.Length)"
-          $p = Start-Process -FilePath $exe.FullName -NoNewWindow -Wait -PassThru -RedirectStandardOutput out.txt -RedirectStandardError err.txt
-          Write-Output ("::error title=exitcode::0x{0:X8}" -f $p.ExitCode)
-          Get-Content out.txt -Tail 8 | ForEach-Object { Write-Output "::error title=out::$_" }
-          Get-Content err.txt -Tail 8 | ForEach-Object { Write-Output "::error title=err::$_" }
-
       - name: Test
         shell: bash
         run: |

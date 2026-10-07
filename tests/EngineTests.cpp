@@ -96,7 +96,7 @@ public:
         beginTest ("Natural mode at root keeps duration for every host rate");
         for (double host : { 44100.0, 48000.0, 88200.0, 96000.0 })
         {
-            EngineFixture f (host);
+            auto fp = std::make_unique<EngineFixture> (host); auto& f = *fp;
             f.params.playbackMode = PlaybackMode::Natural;
             f.apply();
             const double seconds = measureLifetime (f.engine, 60) / host;
@@ -105,7 +105,7 @@ public:
 
         beginTest ("Natural mode resamples (octave up = half duration, octave down = double)");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.playbackMode = PlaybackMode::Natural;
             f.apply();
             expectWithinAbsoluteError (measureLifetime (f.engine, 72) / 48000.0, 0.6, 0.02);
@@ -130,7 +130,7 @@ public:
         beginTest ("Pitch mode keeps duration at C2, C3 and C4");
         for (int note : { 48, 60, 72 })
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.playbackMode = PlaybackMode::Pitch;
             f.apply();
             const double seconds = measureLifetime (f.engine, note) / 48000.0;
@@ -140,7 +140,7 @@ public:
         beginTest ("Pitch mode actually transposes (octave up / down)");
         for (auto [note, expected, other] : { std::tuple { 72, 440.0, 220.0 }, std::tuple { 48, 110.0, 220.0 } })
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.playbackMode = PlaybackMode::Pitch;
             f.apply();
             std::vector<float> out;
@@ -159,7 +159,7 @@ public:
 
         beginTest ("Freeze keeps sounding beyond the sample length and still releases");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.freeze = true;
             f.params.triggerMode = TriggerMode::Gate;
             f.apply();
@@ -173,7 +173,7 @@ public:
 
         beginTest ("Realtime budget: 16 voices, Pitch mode + formant");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.formant = 0.8f;
             f.params.triggerMode = TriggerMode::Gate;
             f.params.loopOn = true;
@@ -193,7 +193,7 @@ public:
 
         beginTest ("Formant processing stays finite and bounded");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.formant = 1.0f;
             f.apply();
             std::vector<float> out;
@@ -259,7 +259,7 @@ public:
         beginTest ("Gate loop sustains past the sample and releases on note-off (Natural & Pitch, fwd & rev)");
         for (int variant = 0; variant < 4; ++variant)
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.loopOn = true;
             f.params.loopStart = 0.3f;
             f.params.loopEnd = 0.6f;
@@ -279,7 +279,7 @@ public:
 
         beginTest ("One Shot loop holds while key is down, plays out after note-off");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.loopOn = true;
             f.params.loopStart = 0.2f;
             f.params.loopEnd = 0.4f;
@@ -295,7 +295,7 @@ public:
 
         beginTest ("Reverse bounds");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.reverse = true;
             f.params.playbackMode = PlaybackMode::Natural;
             f.params.sampleStart = 0.25f;
@@ -336,7 +336,7 @@ public:
     {
         beginTest ("Voice allocation: 16 independent voices");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.triggerMode = TriggerMode::Gate;
             f.apply();
             for (int n = 0; n < 16; ++n) noteOn (f.engine, 40 + n);
@@ -351,7 +351,7 @@ public:
 
         beginTest ("Voice stealing prefers oldest voice and fades it");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.triggerMode = TriggerMode::Gate;
             f.apply();
             for (int n = 0; n < 16; ++n) noteOn (f.engine, 40 + n);
@@ -372,7 +372,7 @@ public:
 
         beginTest ("Voice stealing prefers released voices");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.triggerMode = TriggerMode::Gate;
             f.params.releaseMs = 5000.0f;
             f.apply();
@@ -388,7 +388,7 @@ public:
 
         beginTest ("Parameter clamping: polyphony and root note limits");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.triggerMode = TriggerMode::Gate;
             f.params.polyphony = 400;
             f.params.rootNote = -20;
@@ -416,7 +416,7 @@ public:
 
         beginTest ("MIDI events are rendered at their sample offset; variable block sizes");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.attackMs = 0.5f;
             f.apply();
             juce::AudioBuffer<float> buf (2, 512);
@@ -440,7 +440,7 @@ public:
 
         beginTest ("Sample replacement during playback is safe");
         {
-            EngineFixture f;
+            auto fp = std::make_unique<EngineFixture>(); auto& f = *fp;
             f.params.triggerMode = TriggerMode::Gate;
             f.apply();
             noteOn (f.engine, 60);

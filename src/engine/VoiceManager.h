@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <vector>
 
 #include "Voice.h"
 
@@ -33,13 +34,15 @@ public:
 
     int getActiveVoiceCount() const noexcept;    // includes fading (stolen) voices
     int getSoundingVoiceCount() const noexcept;  // active and not being stolen
-    const std::array<Voice, kNumSlots>& getVoices() const noexcept { return voices; }
+    const std::vector<Voice>& getVoices() const noexcept { return voices; }
 
 private:
     Voice* chooseVictim() noexcept;
     Voice* findFreeSlot() noexcept;
 
-    std::array<Voice, kNumSlots> voices;
+    // Heap-allocated once at construction (each voice owns ~20 KB of grain/formant state);
+    // never resized afterwards, so no allocation happens on the audio thread.
+    std::vector<Voice> voices = std::vector<Voice> (kNumSlots);
     std::uint64_t ageCounter = 0;
 };
 } // namespace lhss
