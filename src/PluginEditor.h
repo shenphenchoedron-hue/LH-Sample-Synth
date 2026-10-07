@@ -34,6 +34,7 @@ private:
     public:
         void paint (juce::Graphics&) override;
         juce::String fileName, fileInfo, footer;
+        juce::Image logo;
         bool fileError = false;
     };
 

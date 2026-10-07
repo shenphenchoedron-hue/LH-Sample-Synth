@@ -65,6 +65,8 @@ AU is added to the format list only when `APPLE` is true. It is never configured
 | macOS | `~/Library/Audio/Plug-Ins/VST3/` | `~/Library/Audio/Plug-Ins/CLAP/` | `~/Library/Audio/Plug-Ins/Components/` |
 | Linux | `~/.vst3/` | `~/.clap/` | – |
 
+Linux Standalone with menu entry and icon: `cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$HOME/.local && cmake --install build`
+
 Builds made locally on macOS are not signed. Run `codesign --force --deep -s - <bundle>` if your host refuses to load them.
 
 ## Controls

@@ -58,7 +58,15 @@ juce_add_plugin(LHSampleSynth
     COPY_PLUGIN_AFTER_BUILD FALSE
     VST3_CATEGORIES Instrument Sampler
     AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/resources/logo-1024.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/resources/logo-256.png"
     FORMATS ${LHSS_FORMATS})
+
+# Logo for the editor header (rendered from resources/logo.svg).
+juce_add_binary_data(LHSampleSynthAssets
+    HEADER_NAME LHSSBinaryData.h
+    NAMESPACE LHSSBinaryData
+    SOURCES resources/logo-256.png)
 
 set(LHSS_CORE_SOURCES
     src/engine/InstrumentEngine.cpp
@@ -100,6 +108,7 @@ target_include_directories(LHSampleSynth PRIVATE src)
 target_compile_definitions(LHSampleSynth PUBLIC ${LHSS_DEFINITIONS})
 target_link_libraries(LHSampleSynth
     PRIVATE
+        LHSampleSynthAssets
         juce::juce_audio_utils
         juce::juce_audio_formats
         juce::juce_dsp
@@ -129,10 +138,22 @@ if(LHSS_BUILD_TESTS)
     target_compile_definitions(LHSampleSynthTests PRIVATE ${LHSS_DEFINITIONS} LHSS_TESTS=1)
     target_link_libraries(LHSampleSynthTests
         PRIVATE
+            LHSampleSynthAssets
             juce::juce_audio_utils
             juce::juce_audio_formats
             juce::juce_dsp
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags)
     add_test(NAME LHSampleSynthTests COMMAND LHSampleSynthTests)
+endif()
+
+# ---------------------------------------------------------------------------------------------
+# Linux desktop integration for the Standalone app (icon + menu entry): cmake --install build
+# ---------------------------------------------------------------------------------------------
+if(UNIX AND NOT APPLE AND LHSS_BUILD_STANDALONE)
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/LHSampleSynth_artefacts/$<CONFIG>/Standalone/LH Sample Synth" DESTINATION bin)
+    install(FILES resources/logo-256.png DESTINATION share/icons/hicolor/256x256/apps RENAME lh-sample-synth.png)
+    install(FILES resources/logo-1024.png DESTINATION share/icons/hicolor/1024x1024/apps RENAME lh-sample-synth.png)
+    configure_file(resources/lh-sample-synth.desktop.in "${CMAKE_BINARY_DIR}/lh-sample-synth.desktop" @ONLY)
+    install(FILES "${CMAKE_BINARY_DIR}/lh-sample-synth.desktop" DESTINATION share/applications)
 endif()

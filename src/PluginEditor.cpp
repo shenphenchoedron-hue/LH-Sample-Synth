@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "LHSSBinaryData.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 
@@ -63,23 +64,26 @@ void LHSampleSynthEditor::Canvas::paint (juce::Graphics& g)
     g.strokePath (framePath, juce::PathStrokeType (2.0f));
     juce::ignoreUnused (full);
 
-    // Title
+    // Logo + title
+    if (logo.isValid())
+        g.drawImage (logo, juce::Rectangle<float> (30.0f, 30.0f, 66.0f, 66.0f), juce::RectanglePlacement::centred);
+
     juce::AttributedString title;
     title.append ("LH ", uiFont (34.0f), col::title);
     title.append ("Sample", uiFont (34.0f), col::blue);
     title.append (" Synth", uiFont (34.0f), col::title);
-    title.draw (g, { 48, 34, 290, 42 });
+    title.draw (g, { 104, 34, 290, 42 });
     g.setFont (uiFont (13.0f));
     g.setColour (col::subtitle);
-    g.drawText ("R E C O R D E D   S O U N D   I N S T R U M E N T", 50, 77, 300, 16, juce::Justification::left, false);
+    g.drawText ("R E C O R D E D   S O U N D   I N S T R U M E N T", 106, 77, 300, 16, juce::Justification::left, false);
 
     // File info
     g.setFont (uiFont (16.0f));
     g.setColour (fileError ? col::error : col::label);
-    g.drawText (fileName, 496, 38, 280, 20, juce::Justification::left, true);
+    g.drawText (fileName, 552, 38, 220, 20, juce::Justification::left, true);
     g.setFont (uiFont (14.0f, false));
     g.setColour (col::tiny);
-    g.drawText (fileInfo, 496, 62, 280, 18, juce::Justification::left, true);
+    g.drawText (fileInfo, 552, 62, 220, 18, juce::Justification::left, true);
 
     drawLabel (g, "Root Note", 790, 41);
     drawLabel (g, "Playback Mode", 890, 41);
@@ -200,6 +204,7 @@ LHSampleSynthEditor::LHSampleSynthEditor (LHSampleSynthProcessor& p)
       reverbMix (p.getAPVTS(), ids::reverbMix, "Mix", col::purple)
 {
     setLookAndFeel (&lookAndFeel);
+    canvas.logo = juce::ImageCache::getFromMemory (LHSSBinaryData::logo256_png, LHSSBinaryData::logo256_pngSize);
     addAndMakeVisible (canvas);
 
     loadButton.onClick = [this] { openFileChooser(); };
@@ -301,7 +306,7 @@ void LHSampleSynthEditor::layoutCanvas()
 {
     canvas.setBounds (0, 0, kDesignWidth, kDesignHeight);
 
-    loadButton.setBounds (330, 39, 150, 38);
+    loadButton.setBounds (392, 39, 146, 38);
     resetButton.setBounds (2192, 44, 170, 38);
     rootNoteBox.setBounds (780, 49, 92, 38);
     playbackMode.setBounds (885, 49, 167, 38);

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=LH Sample Synth
+Comment=Recorded sound instrument
+Exec="@CMAKE_INSTALL_PREFIX@/bin/LH Sample Synth"
+Icon=lh-sample-synth
+Categories=AudioVideo;Audio;Music;
+Terminal=false
