@@ -2,7 +2,12 @@ name: Build
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
+
+permissions:
+  contents: write   # needed by the release job to publish GitHub Releases
 
 jobs:
   build:
@@ -30,7 +35,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxext-dev libxcomposite-dev libfreetype6-dev libfontconfig1-dev \
-            libgl1-mesa-dev libcurl4-openssl-dev libgtk-3-dev
+            libgl1-mesa-dev libcurl4-openssl-dev libgtk-3-dev zip
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
@@ -48,9 +53,6 @@ jobs:
         run: |
           EXE=$(find build/LHSampleSynthTests_artefacts -type f \( -name LHSampleSynthTests -o -name LHSampleSynthTests.exe \) | head -1)
           echo "Running $EXE"
-          if [ -z "$EXE" ]; then
-            find build -iname "*LHSampleSynthTests*" -not -path "*CMakeFiles*" | head -20 | while read -r f; do echo "::error title=candidate::$f"; done
-          fi
           set +e
           "$EXE" > test-output.txt 2>&1
           CODE=$?
@@ -70,12 +72,70 @@ jobs:
           test -e "$A/CLAP/LH Sample Synth.clap"
           if [ "$RUNNER_OS" = "macOS" ]; then test -d "$A/AU/LH Sample Synth.component"; fi
           if [ "$RUNNER_OS" != "macOS" ]; then test ! -e "$A/AU"; fi
-          ls -R "$A" | head -50
+
+      - name: Package
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          case "$VERSION" in v*) ;; *) VERSION="dev-${GITHUB_SHA::7}" ;; esac
+          A="build/LHSampleSynth_artefacts/Release"
+          PKG="LH-Sample-Synth-${VERSION}-${{ matrix.name }}"
+          mkdir -p "dist/$PKG"
+          cp -R "$A/VST3/LH Sample Synth.vst3" "dist/$PKG/"
+          cp -R "$A/CLAP/LH Sample Synth.clap" "dist/$PKG/"
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cp -R "$A/AU/LH Sample Synth.component" "dist/$PKG/"
+            cp -R "$A/Standalone/LH Sample Synth.app" "dist/$PKG/"
+            for b in "dist/$PKG/"*.vst3 "dist/$PKG/"*.clap "dist/$PKG/"*.component "dist/$PKG/"*.app; do
+              codesign --force --deep -s - "$b"   # ad-hoc signature (required on Apple Silicon)
+            done
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            cp "$A/Standalone/LH Sample Synth.exe" "dist/$PKG/"
+          else
+            cp "$A/Standalone/LH Sample Synth" "dist/$PKG/"
+            cp resources/logo-256.png "dist/$PKG/lh-sample-synth.png"
+          fi
+          cp LICENSE THIRD_PARTY_LICENSES.md "dist/$PKG/"
+          cp docs/INSTALL.txt "dist/$PKG/INSTALL.txt"
+          cd dist
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            ditto -c -k --sequesterRsrc --keepParent "$PKG" "$PKG.zip"
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            7z a -tzip "$PKG.zip" "$PKG" > /dev/null
+          else
+            zip -qry "$PKG.zip" "$PKG"
+          fi
+          ls -la
 
       - uses: actions/upload-artifact@v4
         with:
           name: LH-Sample-Synth-${{ matrix.name }}
-          path: |
-            build/LHSampleSynth_artefacts/Release/VST3
-            build/LHSampleSynth_artefacts/Release/CLAP
-            build/LHSampleSynth_artefacts/Release/AU
+          path: dist/*.zip
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Extract release notes for this version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            /^## / { if (found) exit; if (index($0, "[" ver "]")) { found=1; next } }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          cat release-notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: LH Sample Synth ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: dist/*.zip

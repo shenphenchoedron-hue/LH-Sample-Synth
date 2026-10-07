@@ -491,7 +491,8 @@ void LHSampleSynthEditor::timerCallback()
     if (voices != shownVoices)
     {
         shownVoices = voices;
-        canvas.footer = "VST3 / AU / CLAP  |  Active voices: " + juce::String (voices) + " / 16  |  Open source (AGPLv3)";
+        canvas.footer = "LH Sample Synth v" LHSS_VERSION_STRING "  |  VST3 / AU / CLAP  |  Active voices: "
+                        + juce::String (voices) + "  |  Open source (AGPLv3)";
         canvas.repaint (0, 850, 1300, 40);
     }
 }

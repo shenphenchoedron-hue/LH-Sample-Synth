@@ -225,7 +225,7 @@ void LHSampleSynthProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     state.setProperty (kSamplePathProperty, getSampleStatus().path, nullptr);
-    state.setProperty ("pluginVersion", JUCE_STRINGIFY (1.0.0), nullptr);
+    state.setProperty ("pluginVersion", LHSS_VERSION_STRING, nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
 }
 

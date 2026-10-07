@@ -12,7 +12,26 @@ object, a field recording, a percussion hit) and it becomes the sound source you
   coarse/fine tune, unison, drive and a chorus/delay/reverb effect chain.
 * 16-voice polyphony, ADSR, One Shot / Gate, crossfaded looping, reverse, freeze, granular
   texture controls, LPC formant shifting, a multimode filter, and pan, width and output gain.
+* Loads WAV, AIFF, FLAC and OGG (button or drag-and-drop), waveform with draggable markers,
+  **Reset to Default** button, resizable GUI.
 * C++20, JUCE 8, CMake. License: AGPLv3.
+
+## Download
+
+Ready-made builds for Windows, macOS and Linux are on the
+[Releases page](https://github.com/shenphenchoedron-hue/LH-Sample-Synth/releases/latest).
+Each zip contains VST3, CLAP and a standalone app; the macOS zip also contains the Audio Unit.
+`INSTALL.txt` inside each zip says where to copy the files. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
+
+macOS builds are ad-hoc signed but not notarised. If macOS refuses to load them, run
+`xattr -cr "<path to the plugin or app>"` once.
+
+## Releasing
+
+Push a version tag (for example `git tag v1.0.1 && git push origin v1.0.1`). CI then builds,
+tests and packages all three platforms and publishes a GitHub Release. The release notes come
+from the matching section in `CHANGELOG.md`.
 
 ## Building
 
@@ -73,7 +92,7 @@ Builds made locally on macOS are not signed. Run `codesign --force --deep -s - <
 
 | Section | Controls |
 |---|---|
-| Header | Load Sample (or drag and drop a file), file name / duration / sample rate / channels, Root Note (default C3 = MIDI 60), Natural / Pitch, One Shot / Gate, Reverse, Freeze |
+| Header | Load Sample (or drag and drop a WAV/AIFF/FLAC/OGG file), file name / duration / sample rate / channels, Root Note (default C3 = MIDI 60), Natural / Pitch, One Shot / Gate, Reverse, Freeze, Reset to Default |
 | Sample | Waveform with draggable Sample Start, Sample End, Loop Start and Loop End markers. Sample Start and Sample End knobs |
 | Loop | Loop On, Loop Start, Loop End, Crossfade (0–1000 ms) |
 | Envelope | Attack, Decay, Sustain, Release, Velocity (sensitivity), Polyphony (1–16) |
@@ -86,13 +105,13 @@ Builds made locally on macOS are not signed. Run `codesign --force --deep -s - <
 | Drive | Soft tanh saturation per voice (before the filter) |
 | Effects | Chorus (Rate, Depth, Mix), Delay (Time or Sync + Division, Feedback, Mix, Ping Pong), Reverb (Size, Damping, Mix) |
 
-Every control is an automatable parameter with a stable ID (`src/parameters/ParameterIDs.h`). The engine also responds to pitch bend (±2 semitones) and to CC 120 and CC 123.
+Double-click a knob to reset just that knob. Every control is an automatable parameter with a stable ID (`src/parameters/ParameterIDs.h`). The engine also responds to pitch bend (±2 semitones) and to CC 120 and CC 123.
 
 ## Architecture
 
 ```
 src/PluginProcessor.*      Format-neutral JUCE AudioProcessor: APVTS, state, sample loading
-src/PluginEditor.*         GUI on a 2400x540 design canvas, scaled to fit the window
+src/PluginEditor.*         GUI on a 2400x910 design canvas, scaled to fit the window
 src/engine/                InstrumentEngine (MIDI, mixing, output), VoiceManager, Voice, Envelope,
                            SampleData (immutable), SampleLoader, SampleStore (lock-free swapping),
                            SampleRegion (clamping)
@@ -101,6 +120,7 @@ src/dsp/                   GranularPitchProcessor + Grain, NaturalPlaybackProces
                            SampleReader (shared interpolation/loop logic)
 src/gui/                   WaveformView, Knob / ChoiceSegment, LHLookAndFeel
 src/parameters/            Parameter IDs and layout
+resources/                 Logo (SVG + rendered PNGs), Linux desktop entry
 tests/                     Unit tests (JUCE UnitTest)
 ```
 
@@ -174,7 +194,7 @@ After a restore, the plugin asks the host to re-read parameter values.
 * The formant stage uses an order-12 all-pole model. It captures broad resonances such as body and
   vowel colour, but not fine spectral detail.
 * CPU: 16 looping voices in Pitch mode with Formant enabled took about 30 % of one core at 48 kHz
-  on the test machine. Natural mode costs much less.
+  on the test machine. Unison multiplies this (up to 32 voices). Natural mode costs much less.
 * When a saved sample file has moved, you have to load it again manually. There is no automatic
   search.
 * The CLAP wrapper cannot report a rejected state blob. It returns success for garbage data, which

@@ -1,0 +1,40 @@
+LH Sample Synth - installation
+==============================
+
+Copy the plugin files from this folder to your plugin folders, then rescan
+plugins in your DAW.
+
+Windows
+  LH Sample Synth.vst3  ->  C:\Program Files\Common Files\VST3\
+  LH Sample Synth.clap  ->  C:\Program Files\Common Files\CLAP\
+  LH Sample Synth.exe   =   standalone app (run it from anywhere)
+
+macOS
+  LH Sample Synth.vst3       ->  ~/Library/Audio/Plug-Ins/VST3/
+  LH Sample Synth.clap       ->  ~/Library/Audio/Plug-Ins/CLAP/
+  LH Sample Synth.component  ->  ~/Library/Audio/Plug-Ins/Components/   (Audio Unit)
+  LH Sample Synth.app        ->  /Applications/                         (standalone)
+
+  The files are not notarised by Apple. If macOS refuses to open them, run
+  this once in Terminal (adjust the path):
+      xattr -cr ~/Library/Audio/Plug-Ins/VST3/"LH Sample Synth.vst3"
+  and the same for the .clap, .component and .app.
+
+Linux
+  LH Sample Synth.vst3  ->  ~/.vst3/
+  LH Sample Synth.clap  ->  ~/.clap/
+  LH Sample Synth       =   standalone app (chmod +x if needed)
+  lh-sample-synth.png   =   icon for a desktop shortcut
+
+Using it
+  1. Click "Load Sample" (or drop a file on the waveform). WAV, AIFF, FLAC and
+     OGG are supported.
+  2. Play MIDI notes. Root Note (default C3) plays the recording at its
+     original pitch.
+  3. "Pitch" keeps the length of the recording at every note; "Natural" works
+     like a classic sampler.
+  4. "Reset to Default" (top right) sets every control back to its default.
+     Double-click a single knob to reset only that knob.
+
+Source code, license (AGPLv3) and documentation:
+  https://github.com/shenphenchoedron-hue/LH-Sample-Synth
