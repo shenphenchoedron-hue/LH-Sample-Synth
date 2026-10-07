@@ -44,7 +44,20 @@ jobs:
         run: cmake --build build --config Release --parallel 4
 
       - name: Test
-        run: ctest --test-dir build -C Release --output-on-failure
+        shell: bash
+        run: |
+          EXE=$(find build/LHSampleSynthTests_artefacts -type f \( -name LHSampleSynthTests -o -name LHSampleSynthTests.exe \) | head -1)
+          echo "Running $EXE"
+          set +e
+          "$EXE" > test-output.txt 2>&1
+          CODE=$?
+          set -e
+          cat test-output.txt
+          if [ $CODE -ne 0 ]; then
+            echo "::error title=Test exit code::$CODE"
+            tail -n 15 test-output.txt | tr -d '\r' | while IFS= read -r line; do echo "::error title=test tail::$line"; done
+            exit 1
+          fi
 
       - name: Verify artefacts
         shell: bash
